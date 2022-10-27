@@ -1,6 +1,3 @@
-pcb_stator-project/pcb_stator-project-backups/pcb_stator-project-2022-10-27_113134.zip
-pcb_stator-project/pcb_stator-project-backups/pcb_stator-project-2022-10-27_115928.zip
-pcb_stator-project/pcb_stator-project-backups/pcb_stator-project-2022-10-27_121151.zip
-pcb_stator-project/pcb_stator-project-backups/pcb_stator-project-2022-10-27_122132.zip
-__pycache__/__init__.cpython-39.pyc
-__pycache__/kicad_pcb_stator_action.cpython-39.pyc
+pcb_stator-project/pcb_stator-project-backups
+__pycache__
+*.log
