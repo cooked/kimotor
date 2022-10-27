@@ -1,0 +1,17 @@
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 295:Plugin executed on: 'linux'
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 296:Plugin executed with python version: '3.9.9 (main, Nov 10 2011, 15:00:00) \n[GCC 11.3.0]'
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 297:KiCad build version: 6.0.5
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 298:Plugin version: 1.1.2
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 299:Frame repr: <wx._core.Frame object at 0x7fc15529f280>
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 323:Preparing replicator with J1 as a reference
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.replicate_layout 98:getting a list of all footprints on board
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 351:source anchor footprint is 'J1'
+Located on: []
+With filenames: []
+With sheet_id:[]
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 358:Corresponding footprints are 
+[('J1', [])]
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 370:Showing dialog
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 376:Toolbar position: wx.Point(2193, 377)
+10-27 12:02:38 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 382:Dialog position: wx.Point(1829, 377)
+10-27 12:04:02 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 224:User canceled the dialog
