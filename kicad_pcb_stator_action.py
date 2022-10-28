@@ -1,4 +1,7 @@
 import wx
+#import tkinter as tk
+import threading
+
 import pcbnew
 import os
 #import logging
@@ -10,6 +13,7 @@ import math
 class KiMotorDialog ( wx.Dialog ):
     
     def __init__( self, parent ):
+
         wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, 
                                 title = u"KiMotor ", pos = wx.DefaultPosition, size = wx.Size( 300,500 ), 
                                 style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
@@ -50,7 +54,7 @@ class KiMotorDialog ( wx.Dialog ):
 class KiMotorPlugin(pcbnew.ActionPlugin):
     def defaults(self):
         self.name = "KiMotor - PCB motor stator design"
-        self.category = "A descriptive category name"
+        self.category = "Modify Drawing PCB"
         self.description = "KiMotor automates the design of parametric PCB motor stators used in axial-flux motors"
         self.show_toolbar_button = True # Optional, defaults to False
         self.icon_file_name = os.path.join(os.path.dirname(__file__), 'flexibility.png') # Optional, defaults to ""
@@ -60,58 +64,96 @@ class KiMotorPlugin(pcbnew.ActionPlugin):
         group = pcbnew.PCB_GROUP(board)
         board.Add(group)
 
+        # units [mm]
         poles = 6
-        
+        loops = 2
+        trk_w = 1
+
         od = 100
-        id = 50
+        id = 30
         h = 40
         w = 20
 
-        center = pcbnew.wxPointMM(50,50);
-
+        gap = 2 
 
         ps = range(poles)
+        ls = range(loops)
+
+        # trapez
+        th0 = math.radians(360 / poles)
+        dw = (h+id) * math.sin(th0) 
+
+        # pole
         for p in ps:
+
+            # rotation matrix
+            th = math.radians(360 / poles * p);
+            c = math.cos(th)
+            s = math.sin(th)
+            R = np.array( [[c, -s],[s, c]] )
+
+            # coil
+            pa = []
+            for l in ls:
+                p1 = [id + l*gap,   -w/2 + l*gap]
+                p2 = [id+h - l*gap, -w/2 + l*gap]
+                p3 = [id+h - l*gap, w/2 - dw - l*gap]
+                p4 = [id + l*gap,   w/2 + dw - l*gap]
+                p5 = [id + l*gap,   -w/2 + (l+1) * gap]
+                pa.extend([p1,p2,p3,p4,p5])
+
+            pm = np.matrix(pa)
+
+            # rotate
+            T = np.matmul(R, pm.transpose())
+            T = T.transpose()
+
+            # draw track
+            start = T[0]
+            for t in T[1:]:
+                track = pcbnew.PCB_TRACK(board)
+                track.SetWidth(int(1 * 1e6)) # Size here is specified as integer nanometers, so multiply mm by 1e6
+                track.SetLayer(pcbnew.F_Cu)
+                track.SetStart( pcbnew.wxPointMM( start[0,0].item(), start[0,1].item()) )
+                track.SetEnd( pcbnew.wxPointMM( t[0,0].item(), t[0,1].item()) )
+                board.Add(track)
+                #group.AddItem(track)
+                start = t
             
-            th = 2*math.pi * p / poles;
+            # draw terminals 
+            for t in [T[0],T[-1]]:
+                via = pcbnew.PCB_VIA(board)
+                via.SetPosition( pcbnew.wxPointMM( t[0,0].item(), t[0,1].item()) )
+                via.SetDrill(int(trk_w / 2 * 1e6))
+                via.SetWidth(int(trk_w * 1e6))
+                board.Add(via)
+                #group.AddItem(via)
 
-            T0 = np.eye(3)
-            T0[0] = 10 # shift it a bit
+# class KiMotorTk(pcbnew.ActionPlugin):
+#     def defaults(self):
+#         self.name = "KiMotor - PCB motor stator design"
+#         self.category = "Modify Drawing PCB"
+#         self.description = ""
+#         self.show_toolbar_button = True # Optional, defaults to False
+#         self.icon_file_name = os.path.join(os.path.dirname(__file__), 'flexibility.png') # Optional, defaults to ""
 
-            R = np.array([
-                    [math.cos(th),  -math.sin(th),  0],
-                    [math.sin(th),  math.cos(th),   0],
-                    [0,             0.,             1]])
+#     def Run(self):
+#         root = tk.Tk()
+#         root.wm_attributes("-topmost", "true")
+#         #root.withdraw()
+#         #root.update_idletasks()
+#         #root.grab_set()
+#         greeting = tk.Label(text="Hello, Tkinter")
+#         greeting.pack()
 
-            center = np.array([50, 50, 0])
+#         root.mainloop()
 
-            T = np.eye(3)
-            T[:3, :3] = R
-            T[:3] = center - np.matmul(R, center)
+#             #mb = tkMessageBox.showerror("Replicate layout", "Error while registering plugin.\nMost likely Wxpython is not supported with this KiCad build.")
+#             #root.destroy()
+#         #t = threading.Thread(target=messagebox_task)
+#         #t.start()
+#         #t.join()
 
-            T1 = np.matmul(T, T0)
-
-            # Now draw a via at one end of the track
-            via = pcbnew.PCB_VIA(board)
-            via.SetPosition( pcbnew.wxPointMM(T1[0],T1[1]) )
-            via.SetDrill(int(1 * 1e6))
-            via.SetWidth(int(2 * 1e6))
-            board.Add(via)
-            group.AddItem(via)
-
-
-        # Draw a track which goes from (100, 100) to (100, 110)
-        #track = pcbnew.PCB_TRACK(board)
-        #track.SetStart( pcbnew.wxPointMM(100,100) )
-        #track.SetEnd( pcbnew.wxPointMM(100,110) )
-        
-        # Size here is specified as integer nanometers, so multiply mm by 1e6
-        #track.SetWidth(int(0.3 * 1e6))
-        #track.SetLayer(pcbnew.F_Cu)
-        #board.Add(track)
-        #group.AddItem(track)
-
-        
 
 KiMotorPlugin().register() # Instantiate and register to Pcbnew
 
