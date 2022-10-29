@@ -1,7 +1,7 @@
 try:
     # relative path import, instantiation and register to Pcbnew
-    from .kicad_pcb_stator_action import KiMotorPlugin
-    KiMotorPlugin().register()
+    from .kimotor_action import KiMotor
+    KiMotor().register()
 
 except Exception as e:
     import os
@@ -10,4 +10,4 @@ except Exception as e:
     with open(log_file, 'w') as f:
         f.write(repr(e))
     #from .no_wxpython import NoWxpython as SimplePlugin
-    KiMotorPlugin().register()
+    KiMotor().register()
