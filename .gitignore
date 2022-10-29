@@ -1,3 +1,4 @@
-pcb_stator-project/pcb_stator-project-backups
+**/*-backups
 __pycache__
 *.log
+**/_autosave-*.*

@@ -27,24 +27,47 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #self.Close()
         event.Skip()
 
+    def generate2(self, board):
+        
+        trk_w = self.m_ctrlTrackWidth.GetValue()
 
-    # solver
+        track = pcbnew.PCB_ARC(board)
+        track.SetWidth(int(trk_w * 1e6)) # Size here is specified as integer nanometers, so multiply mm by 1e6
+        track.SetLayer(pcbnew.F_Cu)
+        track.SetStart( pcbnew.wxPointMM(0,0) )
+        track.SetMid( pcbnew.wxPointMM(50,50) )
+        track.SetEnd( pcbnew.wxPointMM(100,0) )
+        board.Add(track)
+
+        # update board
+        pcbnew.Refresh()
+
+
     def generate(self, board):
 
-        # TODO: group stuff together
-        #self.group = pcbnew.PCB_GROUP( self.board )
-        #self.board.Add(self.group)
+        self.group = pcbnew.PCB_GROUP( self.board )
+        self.board.Add(self.group)
         
         # units [mm]
         poles = self.m_ctrlPoles.GetValue()
         loops = self.m_ctrlLoops.GetValue()
         trk_w = self.m_ctrlTrackWidth.GetValue()
 
-        od = self.m_ctrlDout.GetValue()
-        id = self.m_ctrlDin.GetValue()
-        h = od*0.65 - id*0.65
+        do = self.m_ctrlDout.GetValue()
+        di = self.m_ctrlDin.GetValue()
+        db = self.m_ctrlDbore.GetValue()
+        ro = do
+        ri = di
+        h = (ro - ri)/2
         w = 20
-
+        
+        try:
+            if di < db*1.5:
+                raise ValueError()
+        except ValueError:
+            wx.LogWarning('Coil inner side and shaft bore are too close. Must be D_in > 1.5*D_bore')
+            return
+            
         gap = trk_w * 4
         
         ps = range(poles)
@@ -54,26 +77,31 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         th0 = math.radians(360 / poles)
         s0 = math.sin(th0/2)
         t0 = math.tan(th0/2)
+        
+        # coil
+        fcu = []
+        fcuv = []
+        for l in ls:
+            dw = (h-2*l*gap)*t0
+            p1 = [ri + l*gap,     -w/2]
+            p2 = [ri+h - l*gap,   -w/2 - dw]
+            p3 = [ri+h - l*gap,   w/2 + dw]
+            p4 = [ri + l*gap,     w/2]
+            #p5 = [id + l*gap,  -w/2 + gap/t0]
 
-        # pole
+            # fcu layer
+            fcu.extend([p1,p2,p3,p4])
+
+            # outer point (mid point of arc)
+            #pv = [ri+h - l*gap + (w/2 + dw)*s0, 0]
+            pv = [ri+h - l*gap + (w/2 + dw)*s0 / 2, 0]
+            fcuv.extend([pv])
+        
+        fcum = np.matrix(fcu)   # points, excl. arc mids
+        fcuvm = np.matrix(fcuv) # arc mids only
+
+        # rotate pole
         for p in ps:
-
-            # coil
-            fcu = []
-            for l in ls:
-                dw = (h-2*l*gap)*t0
-                p1 = [id + l*gap,     -w/2]
-                p2 = [id+h - l*gap,   -w/2 - dw]
-                p3 = [id+h - l*gap,   w/2 + dw]
-                p4 = [id + l*gap,     w/2]
-                p5 = [id + l*gap,     -w/2 + gap/t0]
-
-                # fcu layer
-                fcu.extend([p1,p2])
-                if 1:
-                    pv = [id+h - l*gap + (w/2 + dw)*s0, 0]
-                    fcu.extend([pv])
-                fcu.extend([p3,p4,p5])
 
             # rotation matrix
             th = math.radians(360 / poles * p);
@@ -81,23 +109,35 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             s = math.sin(th)
             R = np.array( [[c, -s],[s, c]] )
 
-            fcum = np.matrix(fcu)
-
-            # rotate
             Tf = np.matmul(R, fcum.transpose())
             Tf = Tf.transpose()
 
+            Tfv = np.matmul(R, fcuvm.transpose())
+            Tfv = Tfv.transpose()
+
             # draw traces
             start = Tf[0]
-            for tf in Tf[1:]:
-                track = pcbnew.PCB_TRACK(board)
+            iv = 0
+            for idx, tf in enumerate(Tf[1:]):
+                
+                if not (idx-1)%4 :
+                    track = pcbnew.PCB_ARC(board)
+                    tfv = Tfv[iv]
+                    track.SetMid( pcbnew.wxPointMM( tfv[0,0].item(), tfv[0,1].item()) )
+                    iv += 1
+                else:
+                    track = pcbnew.PCB_TRACK(board)    
+                
                 track.SetWidth(int(trk_w * 1e6)) # Size here is specified as integer nanometers, so multiply mm by 1e6
                 track.SetLayer(pcbnew.F_Cu)
                 track.SetStart( pcbnew.wxPointMM( start[0,0].item(), start[0,1].item()) )
                 track.SetEnd( pcbnew.wxPointMM( tf[0,0].item(), tf[0,1].item()) )
                 board.Add(track)
+                self.group.AddItem(track)
                 start = tf
-            
+
+
+
             # TODO: logic for connecting layers
             # draw terminals 
             for t in [Tf[0],Tf[-1]]:
@@ -106,25 +146,27 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 via.SetDrill(int(trk_w / 2 * 1e6))
                 via.SetWidth(int(trk_w * 1e6))
                 board.Add(via)
-                #group.AddItem(via)
+                self.group.AddItem(via)
 
 
         # board outline
         arc = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_ARC)
         arc.SetArcGeometry( 
-            pcbnew.wxPointMM(od, 0.0),
-            pcbnew.wxPointMM(-od,0.0),
-            pcbnew.wxPointMM(od, 0.0))
+            pcbnew.wxPointMM(do, 0.0),
+            pcbnew.wxPointMM(-do,0.0),
+            pcbnew.wxPointMM(do, 0.0))
         arc.SetLayer( pcbnew.Edge_Cuts )
         board.Add(arc)
+        self.group.AddItem(arc)
         
         arc = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_ARC)
         arc.SetArcGeometry( 
-            pcbnew.wxPointMM(id, 0.0),
-            pcbnew.wxPointMM(-id,0.0),
-            pcbnew.wxPointMM(id, 0.0))
+            pcbnew.wxPointMM(db, 0.0),
+            pcbnew.wxPointMM(-db,0.0),
+            pcbnew.wxPointMM(db, 0.0))
         arc.SetLayer( pcbnew.Edge_Cuts )
         board.Add(arc)
+        self.group.AddItem(arc)
 
         # update board
         pcbnew.Refresh()
@@ -132,9 +174,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
 class KiMotor(pcbnew.ActionPlugin):
     def defaults(self):
-        self.name = "KiMotor - PCB motor stator design"
+        self.name = "KiMotor"
         self.category = "Modify Drawing PCB"
-        self.description = "KiMotor automates the design of parametric PCB motor stators used in axial-flux motors"
+        self.description = "KiMotor - Design of parametric axial-flux motor stators"
         self.show_toolbar_button = True # Optional, defaults to False
         self.icon_file_name = os.path.join(os.path.dirname(__file__), 'flexibility.png') # Optional, defaults to ""
 

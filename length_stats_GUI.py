@@ -61,6 +61,23 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer5.Add( bSizer22, 1, wx.EXPAND, 5 )
 
+		bSizer2211 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time211 = wx.StaticText( self.m_panel1, wx.ID_ANY, u"D_bore [mm]:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.lbl_refresh_time211.Wrap( -1 )
+
+		bSizer2211.Add( self.lbl_refresh_time211, 0, wx.ALL, 5 )
+
+
+		bSizer2211.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.m_ctrlDbore = wx.SpinCtrlDouble( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 10, 1000, 10, 1 )
+		self.m_ctrlDbore.SetDigits( 2 )
+		bSizer2211.Add( self.m_ctrlDbore, 0, wx.ALL, 5 )
+
+
+		bSizer5.Add( bSizer2211, 1, wx.EXPAND, 5 )
+
 		bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.lbl_refresh_time = wx.StaticText( self.m_panel1, wx.ID_ANY, u"Poles:", wx.DefaultPosition, wx.DefaultSize, 0 )
