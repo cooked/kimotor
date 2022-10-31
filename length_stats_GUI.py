@@ -78,6 +78,40 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer5.Add( bSizer2211, 1, wx.EXPAND, 5 )
 
+		bSizer22111 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time2111 = wx.StaticText( self.m_panel1, wx.ID_ANY, u"R_fillet [mm]:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.lbl_refresh_time2111.Wrap( -1 )
+
+		bSizer22111.Add( self.lbl_refresh_time2111, 0, wx.ALL, 5 )
+
+
+		bSizer22111.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.m_ctrlRfill = wx.SpinCtrlDouble( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0.1, 100, 1, 1 )
+		self.m_ctrlRfill.SetDigits( 2 )
+		bSizer22111.Add( self.m_ctrlRfill, 0, wx.ALL, 5 )
+
+
+		bSizer5.Add( bSizer22111, 1, wx.EXPAND, 5 )
+
+		bSizer221111 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time21111 = wx.StaticText( self.m_panel1, wx.ID_ANY, u"R_flatten [mm]:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.lbl_refresh_time21111.Wrap( -1 )
+
+		bSizer221111.Add( self.lbl_refresh_time21111, 0, wx.ALL, 5 )
+
+
+		bSizer221111.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.m_ctrlRflatt = wx.SpinCtrlDouble( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 1, 100, 30, 0.1 )
+		self.m_ctrlRflatt.SetDigits( 2 )
+		bSizer221111.Add( self.m_ctrlRflatt, 0, wx.ALL, 5 )
+
+
+		bSizer5.Add( bSizer221111, 1, wx.EXPAND, 5 )
+
 		bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.lbl_refresh_time = wx.StaticText( self.m_panel1, wx.ID_ANY, u"Poles:", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -88,7 +122,8 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer2.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlPoles = wx.SpinCtrl( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 4, 100, 6 )
+		self.m_ctrlPoles = wx.SpinCtrlDouble( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 3, 60, 6, 3 )
+		self.m_ctrlPoles.SetDigits( 0 )
 		bSizer2.Add( self.m_ctrlPoles, 0, wx.ALL, 5 )
 
 
@@ -104,7 +139,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer21.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlLoops = wx.SpinCtrl( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 1, 999, 2 )
+		self.m_ctrlLoops = wx.SpinCtrl( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 1, 999, 24 )
 		bSizer21.Add( self.m_ctrlLoops, 0, wx.ALL, 5 )
 
 
@@ -120,7 +155,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer211.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlTrackWidth = wx.SpinCtrlDouble( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 10, 0.5, 0.1 )
+		self.m_ctrlTrackWidth = wx.SpinCtrlDouble( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 10, 0.2, 0.1 )
 		self.m_ctrlTrackWidth.SetDigits( 2 )
 		bSizer211.Add( self.m_ctrlTrackWidth, 0, wx.ALL, 5 )
 
