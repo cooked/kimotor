@@ -11,7 +11,7 @@ else:
     from . import kimotor_linalg as kla
 
 # my implementation
-def fillet(self, t1, t2, r):
+def fillet(board, t1, t2, r):
         
     # any arc track?
     t1_arc = t1.GetClass() == 'PCB_ARC'
@@ -24,7 +24,7 @@ def fillet(self, t1, t2, r):
     r = r * 1e6 
 
     # angle and bisect vector between 2 tracks
-    a, b = self.angle_and_bisect(t1,t2)
+    a, b = kla.angle_and_bisect(t1,t2)
     #if a < -math.pi:
     #    a += math.pi * 2
     #elif a > math.pi:
@@ -63,7 +63,7 @@ def fillet(self, t1, t2, r):
     mp = oc - b*r
 
     # create fillet arc
-    fill = pcbnew.PCB_ARC(self.board)
+    fill = pcbnew.PCB_ARC(board)
     fill.SetWidth( t1.GetWidth() )
     fill.SetLayer(pcbnew.F_Cu)
     fill.SetStart( t1.GetEnd() )
@@ -202,6 +202,6 @@ def do_fillet(board, a, b, fillet_value):
     
     # if track, disregard the "shape" arc and add track only
     if is_track:
-        board.Add(f)
+        return f
     else:
-        board.Add(s_arc)
+        return s_arc
