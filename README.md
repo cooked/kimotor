@@ -1,2 +1,2 @@
-# kicad-pcb-stator
-KiCAD plugin to design and layout parametric PCB motor stators
+# KiMotor
+KiCAD Motor (KiMotor) is a plugin to generate parametric PCB motor stators
