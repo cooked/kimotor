@@ -109,6 +109,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.do_coils_terminals(coil_t)
         # place mounting holes
         self.do_mounts()
+        # design the board edges
+        self.do_outline()
 
         # update board
         pcbnew.Refresh()
@@ -257,39 +259,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             ce = pcbnew.wxPoint( int(start[0,0].item()), int(start[0,1].item()) )
             coil_t.append([cs,ce])
 
-        #
-        # board edges
-        #
-        # create the stator outline
-        #arc = pcbnew.PCB_SHAPE(board)
-        #arc.SetShape(pcbnew.SHAPE_T_ARC)
-        cx = 0
-        cy = 0
-
-        #arc = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_CIRCLE)
-        #arc.SetFilled(False)
-        #arc.SetStart( pcbnew.wxPointMM( cx,cy) )
-        #arc.SetEnd( pcbnew.wxPointMM( cx+do/2,cy ))
-        #arc.SetCenter(pcbnew.wxPointMM(CENTER_X, CENTER_Y))
-        
-        arc = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_ARC)
-        arc.SetArcGeometry( 
-            pcbnew.wxPoint( ro, 0),
-            pcbnew.wxPoint( -ro, 0),
-            pcbnew.wxPoint( ro,  0))
-        arc.SetLayer( pcbnew.Edge_Cuts )
-        self.board.Add(arc)
-        self.group.AddItem(arc)
-        
-        arc = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_ARC)
-        arc.SetArcGeometry( 
-            pcbnew.wxPoint( rb, 0),
-            pcbnew.wxPoint( -rb, 0),
-            pcbnew.wxPoint( rb, 0))
-        arc.SetLayer( pcbnew.Edge_Cuts )
-        self.board.Add(arc)
-        self.group.AddItem(arc)
-
         # pass coil terminals
         return coil_t
 
@@ -314,7 +283,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             
             # concentric rings/arcs
             crb = self.rb + dri + p*dr
-            cro = (self.ro + dri + p*dr) * 1.2
+            cro = (self.ro + dri + p*dr) * 1.12
 
             # start, end, and mid angle
             ths = th0*p + thadj
@@ -322,7 +291,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             thm = (ths+the)/2
 
             # get coils terminals
-            # TODO: generatlize
+            # TODO: generalize
             c1s, c1e = coil_t[p]
             c2s, c2e = coil_t[p+3]
 
@@ -522,7 +491,31 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         return 0
 
     def do_mounts(self):
+        # TODO:
         return 0
+
+    def do_outline(self):
+        
+        ro = 1.24 * self.ro
+
+        arc = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_ARC)
+        arc.SetArcGeometry( 
+            pcbnew.wxPoint( ro, 0),
+            pcbnew.wxPoint( -ro, 0),
+            pcbnew.wxPoint( ro,  0))
+        arc.SetLayer( pcbnew.Edge_Cuts )
+        self.board.Add(arc)
+        self.group.AddItem(arc)
+        
+        arc = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_ARC)
+        arc.SetArcGeometry( 
+            pcbnew.wxPoint( self.rb, 0),
+            pcbnew.wxPoint( -self.rb, 0),
+            pcbnew.wxPoint( self.rb, 0))
+        arc.SetLayer( pcbnew.Edge_Cuts )
+        self.board.Add(arc)
+        self.group.AddItem(arc)
+
 
 class KiMotor(pcbnew.ActionPlugin):
     def defaults(self):

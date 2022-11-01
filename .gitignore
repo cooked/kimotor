@@ -2,3 +2,4 @@
 __pycache__
 *.log
 **/_autosave-*.*
+**/*.kicad_prl
