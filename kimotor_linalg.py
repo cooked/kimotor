@@ -5,21 +5,136 @@ import numpy as np
 import pcbnew
 import wx
 
-def line(self, t):
+def vec(t):
+    # track unit vector
+    p1 = t.GetStart()
+    p2 = t.GetEnd()
+    v = np.array([ p2.x-p1.x, p2.y-p1.y, 0 ])
+    return v
+
+def line(l):
     # find params of line equation ( y = mx + k ), given a track
+
+    p1 = l[0]
+    p2 = l[1]
+
+    m = (p2[1]-p1[1])/(p2[0]-p1[0])
+    k = p1[1] - m * p1[0]
+
+    return m, k
+
+def line_points(t):
+    # get track start/end points
     ts = t.GetStart()
     te = t.GetEnd()
-    m = (te.y-ts.y)/(te.x-ts.x)
-    k = ts.y - m*ts.x
-    return m, k
+    return np.array( [[ts.x, ts.y, 0], [te.x, te.y, 0]] )
 
-def line(self, ts, te):
-    # find params of line equation ( y = mx + k ), given start and end wxPoints  
-    m = (te.y-ts.y)/(te.x-ts.x)
-    k = ts.y - m*ts.x
-    return m, k
+def line_line_intersect(l1,l2):
+    # https://mathworld.wolfram.com/Line-LineIntersection.html
 
-def circles_intercept(self, x1,y1,r1, x2,y2,r2):
+    p1 = l1[0]
+    p2 = l1[1]
+    p3 = l2[0]
+    p4 = l2[1]
+
+    a12 = np.linalg.det(np.array([[p1[0], p1[1]], [p2[0], p2[1]]]))
+    a34 = np.linalg.det(np.array([[p3[0], p3[1]], [p4[0], p4[1]]]))
+    x12 = p1[0] - p2[0]
+    x34 = p3[0] - p4[0]
+    y12 = p1[1] - p2[1]
+    y34 = p3[1] - p4[1]
+    
+    nx = np.linalg.det(np.array( [[a12, x12], [a34, x34]] ))
+    ny = np.linalg.det(np.array( [[a12, y12], [a34, y34]] ))
+    d = np.linalg.det(np.array( [[x12, y12], [x34, y34]] ))
+
+    return np.array([nx/d, ny/d])
+
+def circle_line_intersect(l, xc,yc,r):
+
+    m,k = line(l)
+
+    a = 1+m**2
+    b = 2 * (m*k - m*yc - xc)
+    c = k**2 + xc**2 + yc**2 - r**2 - 2*k*yc
+    dsc = b**2 - 4*a*c
+
+    x = (-b + math.sqrt(dsc)) / (2*a)
+    #x2 = (-b - math.sqrt(dsc2)) / (2*a)
+    y = m*x + k
+
+    return np.array([x, y])
+
+# --- NOT USED --- 
+def circle_line_intersect_2(l, xc,yc,r):
+
+    # https://mathworld.wolfram.com/Circle-LineIntersection.html
+
+    p1 = l[0]
+    p2 = l[1]
+
+    dx = p2[0] - p1[0]
+    dy = p2[1] - p1[1]
+    dr = math.sqrt( dx**2 + dy**2 )
+    D = p1[0]*p2[1] - p2[0]*p1[1]
+
+    dsc = r*r * dr*dr - D*D
+
+    # check why it works only with -
+    x = (D*dy + np.sign(dy)*dx * math.sqrt(dsc) ) / dr**2
+    x_ = (D*dy - np.sign(dy)*dx * math.sqrt(dsc) ) / dr**2
+    y = (-D*dx + np.abs(dy) * math.sqrt(dsc) ) / dr**2
+    y = (-D*dx - np.abs(dy) * math.sqrt(dsc) ) / dr**2
+
+    x = x + xc
+    y = y + yc
+
+    return np.array([x,y])
+
+
+def line_line_center(t1,t2, f):
+    # find fillet center, i.e intersection of the 2 lines offset by f
+
+    # vectors (np arrays)
+    v1 = vec(t1)
+    v2 = vec(t2)
+
+    # unit vectors
+    v1u = v1/np.linalg.norm(v1) 
+    v2u = v2/np.linalg.norm(v2) 
+    z = np.array([0,0,1])
+
+    # side, cw or ccw
+    a = (math.atan2(v2[1],v2[0]) - math.atan2(v1[1],v1[0]))
+
+    # if convex (i.e. angle > pi) invert direction
+    #if a < -math.pi:
+    #    a += math.pi * 2
+    #elif a > math.pi:
+    #    a -= math.pi * 2
+
+    s = np.sign(a)
+
+    wx.LogWarning(f'NEW ang: {math.degrees(a)}, sign: {s}')
+
+    p1 = line_points(t1)
+    p2 = line_points(t2)
+
+    v1n = np.cross( z, v1u ) 
+    v2n = np.cross( z, v2u ) 
+
+    # apply offset
+    p1[0] = np.add(p1[0], f*v1n)
+    p1[1] = np.add(p1[1], f*v1n)
+    p2[0] = np.add(p2[0], f*v2n)
+    p2[1] = np.add(p2[1], f*v2n)
+
+    p = line_line_intersect(p1,p2)
+
+    return p
+
+
+def circles_intercept(x1,y1,r1, x2,y2,r2):
     # https://math.stackexchange.com/questions/256100/how-can-i-find-the-points-at-which-two-circles-intersect
     # https://gist.github.com/jupdike/bfe5eb23d1c395d8a0a1a4ddd94882ac
     # https://gist.github.com/jupdike/bfe5eb23d1c395d8a0a1a4ddd94882ac?permalink_comment_id=3590178#gistcomment-3590178
@@ -49,7 +164,7 @@ def circles_intercept(self, x1,y1,r1, x2,y2,r2):
     #but that one solution will just be duplicated as the code is currently written
     return [ix1, iy1], [ix2, iy2];
 
-def line_arc_center(self, t1, t2, f):
+def line_arc_center(t1, t2, f):
     # Find fillet center, which is the intersection of the line track shifted by "fillet" 
     # and the arc line with reduced radius "r - fillet"
 
@@ -96,14 +211,16 @@ def line_arc_center(self, t1, t2, f):
 
     fe1, fe2 = circles_intercept(o.x,o.y,r, p[0],p[1],f)
     
+    wx.LogWarning(f'circle intercepts: {fe1}, {fe2}')
+
     return p, fe1
 
-def normalize(self, t):
+def normalize(t):
     # returns (unit vector) direction of the track
     n = np.array([ t.GetEndX()-t.GetX(), t.GetEndY()-t.GetY() ])
     return n / t.GetLength()
 
-def tangent(self, t, end = False):
+def tangent(t, end = False):
     # find direction of tangent at start (or end) of arc track
     to = t.GetCenter()
     tp = t.GetEnd() if end else t.GetStart()
@@ -111,15 +228,17 @@ def tangent(self, t, end = False):
     z = np.array([0,0,-1])
     return np.cross(rd, z)
 
-def angle_and_bisect(self, t1, t2):
+def angle_and_bisect(t1, t2):
     # find angle and bisect vector between tracks, using tangent if track is arc
     # (assumes track1_end == track2_start)
     
     if t1.GetClass() == 'PCB_ARC':
         v1 = tangent(t1, True)
     else:
-        v1 = np.array([ t1.GetX()-t1.GetEndX(), t1.GetY()-t1.GetEndY(), 0 ])
-        v1 = v1/t1.GetLength()
+        t1s = t1.GetStart()
+        t1e = t1.GetEnd()
+        v1 = np.array([ t1e.x-t1s.x, t1e.y-t1s.y, 0 ])
+        v1 = v1 / t1.GetLength()
     
     if t2.GetClass() == 'PCB_ARC':
         v2 = tangent(t2)
@@ -127,14 +246,25 @@ def angle_and_bisect(self, t1, t2):
         v2 = np.array([ t2.GetEndX()-t2.GetX(), t2.GetEndY()-t2.GetY(), 0 ])
         v2 = v2 / t2.GetLength()
 
+    z = np.array([0,0,1])
+
+    
+    d = np.dot(v1,v2)
+    c = np.cross(v1,v2)
+    # +/- rotation?
+    s = np.sign( np.dot(z,c) )
+    
     # angle 
-    a = math.acos( np.dot(v1,v2) )
+    a = s * math.acos(d)
+    
     # normalized bisect 
     b = (v1+v2) / np.linalg.norm(v1+v2)
+    b = np.cross(b,-z)
+    b = b / np.linalg.norm(b)
 
-    return a, b 
+    return a, b
 
-def angle2(self, t1, t2):
+def angle2(t1, t2):
     # t1: first track
     # t2: next track
 

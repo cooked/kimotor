@@ -10,9 +10,17 @@ if __name__ == '__main__':
 else:
     from . import kimotor_linalg as kla
 
+def test_angle(t1, t2):
+    rev = 1
+    kla.angle_and_bisect(t1,t2)
+
+    
+
 # my implementation
 def fillet(board, t1, t2, r):
-        
+
+    # r: fillet radius [nm] 
+    
     # any arc track?
     t1_arc = t1.GetClass() == 'PCB_ARC'
     t2_arc = t2.GetClass() == 'PCB_ARC'
@@ -20,57 +28,52 @@ def fillet(board, t1, t2, r):
     t1e = t1.GetEnd()
     t2s = t2.GetStart()
 
-    # fillet radius (mm to nanometers)
-    r = r * 1e6 
-
     # angle and bisect vector between 2 tracks
-    a, b = kla.angle_and_bisect(t1,t2)
-    #if a < -math.pi:
-    #    a += math.pi * 2
-    #elif a > math.pi:
-    #    a -= math.pi * 2
-
-    # trim tracks
-    dt = r / math.tan( a/2 )
-    dt1 = dt * kla.normalize(t1)
-    t1.SetEnd( pcbnew.wxPoint(
-        t1e.x - int(dt1[0]),
-        t1e.y - int(dt1[1]))
-    )
-
-    if t2_arc:
-        c1, t2s = kla.line_arc_center(t1, t2, r)
-        t2.SetStart( pcbnew.wxPoint(t2s[0],t2s[1]) )
-    else:
-        dt2 = dt * kla.normalize(t2)
-        t2.SetStart( pcbnew.wxPoint(
-            t2s.x + int(dt2[0]),
-            t2s.y + int(dt2[1]) )
-        )
-
-    # solve fillet arc mid-point
-    #
-    # find t1e, endpoint of track1
-    t1e = np.array([ t1.GetEndX(), t1.GetEndY(), 0 ])
-    # find direction ortho to track
-    t1n = kla.normalize(t1)
-    z = np.array([0,0,-1])
-    dc = np.cross(t1n, z)
-    oc = t1e + dc*r
+    # a, b = kla.angle_and_bisect(t1,t2)
     
+    # fillet center
+    c = kla.line_line_center(t1,t2,r)
+    wx.LogWarning(f'c: {c}')
+
+    # trim point on track1
+    l1 = kla.line_points(t1)
+    p1 = kla.circle_line_intersect(l1, c[0],c[1],r)
+    wx.LogWarning(f'p1: {p1}')
+
+    # trim point on track2
+    l2 = kla.line_points(t2)
+    p2 = kla.circle_line_intersect(l2, c[0],c[1],r)
+    wx.LogWarning(f'p2: {p2}')
+
+    return c, p1, p2
+
+    # if t2_arc:
+    #     c1, t2s = kla.line_arc_center(t1, t2, r)
+    #     t2.SetStart( pcbnew.wxPoint(t2s[0],t2s[1]) )
+    # else:    
+    #     # circle/track2  intersect
+        
+
+    #     dt2 = dt * kla.normalize(t2)
+    #     t2.SetStart( pcbnew.wxPoint(
+    #         t2s.x + int(dt2[0]),
+    #         t2s.y + int(dt2[1]) )
+    #     )
+
+    # # solve fillet arc mid-point
+    # #
+    # # find t1e, endpoint of track1
+    # t1e = np.array([ t1.GetEndX(), t1.GetEndY(), 0 ])
+    # # find direction ortho to track
+    # t1n = kla.normalize(t1)
+    # z = np.array([0,0,1])
+    # dc = np.cross(t1n, z)
+    # oc = t1e + dc*r
     
-    #  move from track 1 end to center, then along bisect direction  
-    mp = oc - b*r
+    # #  move from track 1 end to center, then along bisect direction  
+    # mp = oc - b*r
 
-    # create fillet arc
-    fill = pcbnew.PCB_ARC(board)
-    fill.SetWidth( t1.GetWidth() )
-    fill.SetLayer(pcbnew.F_Cu)
-    fill.SetStart( t1.GetEnd() )
-    fill.SetEnd( t2.GetStart() )
-    fill.SetMid( pcbnew.wxPoint(mp[0],mp[1]) )
-
-    return fill
+    
 
 
 # see https://github.com/tywtyw2002/FilletEdge/blob/master/fillet_helper.py
@@ -112,6 +115,8 @@ def do_fillet(board, a, b, fillet_value):
         b_reverse = -1
         b_set = b.SetEnd
 
+    # TODO: add support for arcs here, after reorientation of tracks 
+    # has been done (see above)
 
     a_v = pcbnew.VECTOR2I(
         (a_e.x - a_s.x) * a_reverse,
@@ -134,6 +139,7 @@ def do_fillet(board, a, b, fillet_value):
     c_v = a_v.Resize(1000000) + b_v.Resize(1000000)
     c_angle = c_v.Angle()
 
+    # TODO: for arcs the offset has to be done differently
 
     offset = fillet_value
     if int(deg) != 90 and int(deg) != -90:
@@ -168,7 +174,7 @@ def do_fillet(board, a, b, fillet_value):
         f.SetLayer( a.GetLayer() )
 
     
-    
+    # set center
     if offset == fillet_value:
         # 90 or -90
         s_arc.SetCenter(pcbnew.wxPoint(

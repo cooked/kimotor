@@ -37,36 +37,128 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
     def on_btn_generate(self, event):
         #self.logger.info("Generate stator coils")
-        self.generate()
+        self.generate2()
         event.Skip()
+
+    def test_fill(self, t1,t2, fill):
+ 
+        p = []
+        p1 = []
+        p2 = []
+
+        #p, p1, p2 = kf.fillet(self.board, t1, t2, fill)
+        
+        kf.do_fillet(self.board, t1, t2, fill)
+
+        via = pcbnew.PCB_VIA(self.board)
+        via.SetPosition( pcbnew.wxPoint(p[0],p[1]) )
+        via.SetDrill( int(self.trk_w/2) )
+        via.SetWidth( int(self.trk_w) )
+        self.board.Add(via)
+
+        via = pcbnew.PCB_VIA(self.board)
+        via.SetPosition( pcbnew.wxPoint(p1[0],p1[1]) )
+        via.SetDrill( int(self.trk_w/2) )
+        via.SetWidth( int(self.trk_w) )
+        self.board.Add(via)
+
+        via = pcbnew.PCB_VIA(self.board)
+        via.SetPosition( pcbnew.wxPoint(p2[0],p2[1]) )
+        via.SetDrill( int(self.trk_w/2) )
+        via.SetWidth( int(self.trk_w) )
+        self.board.Add(via)
 
     def generate2(self):
         
-        trk_w = self.m_ctrlTrackWidth.GetValue()
-        fillet = 10
+        shift = 150
+        fill = int(10 * 1e6)
 
-        track = pcbnew.PCB_TRACK(self.board)
-        track.SetWidth( int(trk_w * 1e6) )
-        track.SetLayer( pcbnew.F_Cu )
-        track.SetStart( pcbnew.wxPointMM(0,0) )
-        track.SetEnd( pcbnew.wxPointMM(100,0) )
-        self.board.Add(track)
+        trk_w = int( self.m_ctrlTrackWidth.GetValue() * 1e6)
 
-        #track2 = pcbnew.PCB_ARC(self.board)
-        track2 = pcbnew.PCB_TRACK(self.board)
-        track2.SetWidth(int(trk_w * 1e6))
-        track2.SetLayer(pcbnew.F_Cu)
-        track2.SetStart( pcbnew.wxPointMM(100,0) )
-        #track2.SetEnd( pcbnew.wxPointMM(100,-100) )
-        #track2.SetMid( pcbnew.wxPointMM(120,-50) )
-        track2.SetEnd( pcbnew.wxPointMM(100,100) )
-        #track2.SetMid( pcbnew.wxPointMM(120,50) )
-        self.board.Add(track2)
+        t10 = pcbnew.PCB_TRACK(self.board)
+        t10.SetWidth( trk_w )
+        t10.SetLayer( pcbnew.F_Cu )
+        t10.SetStart( pcbnew.wxPointMM(50,50) )
+        t10.SetEnd( pcbnew.wxPointMM(0,0) )
+        self.board.Add(t10)
+
+        t1 = pcbnew.PCB_TRACK(self.board)
+        t1.SetWidth( trk_w )
+        t1.SetLayer( pcbnew.F_Cu )
+        t1.SetStart( pcbnew.wxPointMM(0,0) )
+        t1.SetEnd( pcbnew.wxPointMM(100,0) )
+        self.board.Add(t1)
+
+        t12 = pcbnew.PCB_TRACK(self.board)
+        t12.SetWidth( trk_w )
+        t12.SetLayer( pcbnew.F_Cu )
+        t12.SetStart( pcbnew.wxPointMM(100,0) )
+        t12.SetEnd( pcbnew.wxPointMM(150,50) )
+        self.board.Add(t12)
+
+        self.test_fill(t10,t1, fill)
+        self.test_fill(t1,t12, fill)
+        
+
+
+        t30 = pcbnew.PCB_TRACK(self.board)
+        t30.SetWidth( trk_w )
+        t30.SetLayer( pcbnew.F_Cu )
+        t30.SetStart( pcbnew.wxPointMM(50,shift+10-50) )
+        t30.SetEnd( pcbnew.wxPointMM(0,shift+10) )
+        self.board.Add(t30)
+
+        t3 = pcbnew.PCB_TRACK(self.board)
+        t3.SetWidth( trk_w )
+        t3.SetLayer( pcbnew.F_Cu )
+        t3.SetStart( pcbnew.wxPointMM(0,shift+10) )
+        t3.SetEnd( pcbnew.wxPointMM(100,shift+10) )
+        self.board.Add(t3)
+
+        t32 = pcbnew.PCB_TRACK(self.board)
+        t32.SetWidth( trk_w )
+        t32.SetLayer( pcbnew.F_Cu )
+        t32.SetStart( pcbnew.wxPointMM(100,shift+10) )
+        t32.SetEnd( pcbnew.wxPointMM(150,shift+10-50) )
+        self.board.Add(t32)
+
+        self.test_fill(t30,t3, fill)
+        self.test_fill(t3,t32, fill)
+
+        #p = kla.line_line_center(t30,t3, fill)
+        
+        #via = pcbnew.PCB_VIA(self.board)
+        #via.SetPosition( pcbnew.wxPoint(p[0],p[1]) )
+        #via.SetDrill( int(self.trk_w/2) )
+        #via.SetWidth( int(self.trk_w) )
+        #self.board.Add(via)
+
+        #kf.fillet(self.board, t3, t32, fill)
+
+
+
+        t2 = pcbnew.PCB_TRACK(self.board)
+        t2.SetWidth( trk_w )
+        t2.SetLayer( pcbnew.F_Cu )
+        t2.SetStart( pcbnew.wxPointMM(shift,10) )
+        t2.SetEnd( pcbnew.wxPointMM(shift+100,10) )
+        self.board.Add(t2)
+
+        t22 = pcbnew.PCB_ARC(self.board)
+        t22.SetWidth( trk_w )
+        t22.SetLayer( pcbnew.F_Cu )
+        t22.SetStart( pcbnew.wxPointMM(shift+100,10) )
+        t22.SetMid( pcbnew.wxPointMM(shift+120,50) )
+        t22.SetEnd( pcbnew.wxPointMM(shift+100,100) )
+        self.board.Add(t22)
+
+        #kf.fillet(self.board, t2, t22, fill)
+
 
         #wx.LogWarning(f'angle: {math.degrees(a)}')
 
         #track3 = pcbnew.PCB_ARC(self.board)
-        #track3.SetWidth(int(trk_w * 1e6))
+        #track3.SetWidth( trk_w )
         #track3.SetLayer(pcbnew.F_Cu)
         #track3.SetStart( pcbnew.wxPointMM(0,100) )
         #track3.SetEnd( pcbnew.wxPointMM(0,50) )
@@ -76,7 +168,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #fill = self.fillet(track, track2, 10)
         #self.board.Add(fill)
         
-        kf.do_fillet(self.board, track, track2, 10*1e6)
+        #kf.do_fillet(self.board, track, track2, 10*1e6)
 
         #fill2 = self.fillet(track2, track3, 10)
         #self.board.Add(fill2)
@@ -488,6 +580,10 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.board.Add(conn)
         self.group.AddItem(conn)
 
+        return 0
+
+    def do_thermal(self):
+        # TODO:
         return 0
 
     def do_mounts(self):
