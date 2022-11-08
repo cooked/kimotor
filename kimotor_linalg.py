@@ -5,20 +5,35 @@ import numpy as np
 import pcbnew
 import wx
 
+# basic
 def vec(t):
-    # track unit vector
+    # track direction
     p1 = t.GetStart()
     p2 = t.GetEnd()
     v = np.array([ p2.x-p1.x, p2.y-p1.y, 0 ])
     return v
-
+def line_vec(l):
+    # line unit vector
+    p1 = l[0]   # start point [x,y]
+    p2 = l[1]   # end point [x, y]
+    
+    dx = p2[0]-p1[0]
+    dy = p2[1]-p1[1]
+    d = math.sqrt(dx**2 + dy**2)
+    v = np.array([ dx/d, dy/d, 0])
+    
+    return v
 def line(l):
     # find params of line equation ( y = mx + k ), given a track
 
     p1 = l[0]
     p2 = l[1]
 
-    m = (p2[1]-p1[1])/(p2[0]-p1[0])
+    dx = p2[0]-p1[0]
+    dy = p2[1]-p1[1]
+    
+    m = dy/dx
+
     k = p1[1] - m * p1[0]
 
     return m, k
@@ -29,6 +44,108 @@ def line_points(t):
     te = t.GetEnd()
     return np.array( [[ts.x, ts.y, 0], [te.x, te.y, 0]] )
 
+def circle_line_tg(l, c,r):
+
+    p1 = l[0]
+    p2 = l[1]
+
+    # vectors (np arrays)
+    vl = np.array([ p2[0]-p1[0], p2[1]-p1[1], 0 ])
+    vc = np.array([ c[0]-p1[0], c[1]-p1[1], 0 ] )
+
+    # unit vectors
+    vlu = vl/np.linalg.norm(vl) 
+    vcu = vc/np.linalg.norm(vc) 
+    z = np.array([0,0,1])
+
+    # side, cw or ccw
+    d = np.dot(vcu,vlu)
+    cc = np.cross(vcu,vlu)
+    s = np.sign( np.dot(z,cc) )
+
+    vln = np.cross( z, vlu )
+
+    p = c + np.dot(s*r,vln)
+
+    return p
+
+def circle_line_sec(l, c,r):
+    # https://mathworld.wolfram.com/Circle-LineIntersection.html
+
+    p1 = l[0]
+    p2 = l[1]
+
+    dx = p2[0] - p1[0]
+    dy = p2[1] - p1[1]
+    dr2 = dx**2 + dy**2
+    D = p1[0]*p2[1] - p2[0]*p1[1]
+    dsc = dr2 * r**2 - D**2
+
+    wx.LogError(f'dx {dx}, dy {dy}, c {c}, r {r}, dsc {dsc}, D {D}')
+
+    x = ( (D*dy) + np.sign(dy)*dx*math.sqrt(dsc)) / dr2 + c[0]
+    y = (-(D*dx) + np.abs(dy)*math.sqrt(dsc)) / dr2 + c[1]
+
+    return np.array([x,y])
+
+def circle_circle_tg(p1,r1,p2,r2):
+    
+    if r1<r2:
+        dx = p1[0]-p2[0]
+        dy = p1[1]-p2[1]
+        d = math.sqrt(dx**2 + dy**2)
+        v = np.array([ dx/d, dy/d ])
+    else:
+        dx = p2[0]-p1[0]
+        dy = p2[1]-p1[1]
+        d = math.sqrt(dx**2 + dy**2)
+        v = np.array([ dx/d, dy/d ])
+
+    # trim point
+    t = p2 + np.dot(r2,v)
+
+    return t
+
+def circle_arc_mid(p1,p2, c,r):
+    
+    # mid point of segment connecting arc end points
+    m = [ (p1[0]+p2[0])/2, (p1[1]+p2[1])/2 ]
+
+    dx = m[0]-c[0]
+    dy = m[1]-c[1]
+    d = math.sqrt(dx**2 + dy**2)
+    v = np.array([ dx/d, dy/d, 0 ])
+
+    return c + np.dot(r,v)
+
+
+def circle_line_intersect(l, c,r):
+
+    # TODO: this fails for dx=0 (m=inf)
+    m,k = line(l)
+    
+    xc = c[0]
+    yc = c[1]
+
+    a = 1+m**2
+    b = 2 * (m*k - m*yc - xc)
+    c = k**2 + xc**2 + yc**2 - r**2 - 2*k*yc
+    # FIXME: this is cheating.... fix the numerical stability 
+    # such that the discriminant is 0 or positive
+    dsc = np.abs(b**2 - 4*a*c)
+
+    # FIXME: more and more patches... this is for the 2nd quadrant
+    if l[1][0]-l[0][0]<0:
+        x = (-b - math.sqrt(dsc)) / (2*a)
+    else:
+        x = (-b + math.sqrt(dsc)) / (2*a)
+
+    y = m*x + k
+
+    return np.array([x, y, 0])
+
+
+# line-to-line fillet
 def line_line_intersect(l1,l2):
     # https://mathworld.wolfram.com/Line-LineIntersection.html
 
@@ -48,96 +165,49 @@ def line_line_intersect(l1,l2):
     ny = np.linalg.det(np.array( [[a12, y12], [a34, y34]] ))
     d = np.linalg.det(np.array( [[x12, y12], [x34, y34]] ))
 
-    return np.array([nx/d, ny/d])
-
-def circle_line_intersect(l, xc,yc,r):
-
-    m,k = line(l)
-
-    a = 1+m**2
-    b = 2 * (m*k - m*yc - xc)
-    c = k**2 + xc**2 + yc**2 - r**2 - 2*k*yc
-    dsc = b**2 - 4*a*c
-
-    x = (-b + math.sqrt(dsc)) / (2*a)
-    #x2 = (-b - math.sqrt(dsc2)) / (2*a)
-    y = m*x + k
-
-    return np.array([x, y])
-
-# --- NOT USED --- 
-def circle_line_intersect_2(l, xc,yc,r):
-
-    # https://mathworld.wolfram.com/Circle-LineIntersection.html
-
-    p1 = l[0]
-    p2 = l[1]
-
-    dx = p2[0] - p1[0]
-    dy = p2[1] - p1[1]
-    dr = math.sqrt( dx**2 + dy**2 )
-    D = p1[0]*p2[1] - p2[0]*p1[1]
-
-    dsc = r*r * dr*dr - D*D
-
-    # check why it works only with -
-    x = (D*dy + np.sign(dy)*dx * math.sqrt(dsc) ) / dr**2
-    x_ = (D*dy - np.sign(dy)*dx * math.sqrt(dsc) ) / dr**2
-    y = (-D*dx + np.abs(dy) * math.sqrt(dsc) ) / dr**2
-    y = (-D*dx - np.abs(dy) * math.sqrt(dsc) ) / dr**2
-
-    x = x + xc
-    y = y + yc
-
-    return np.array([x,y])
-
-
+    return np.array([nx/d, ny/d, 0])
 def line_line_center(t1,t2, f):
-    # find fillet center, i.e intersection of the 2 lines offset by f
+    # find fillet center, given two straight lines 
+    # (i.e intersection of the 2 lines offset by f)
 
-    # vectors (np arrays)
+    # solve unit vectors
     v1 = vec(t1)
     v2 = vec(t2)
-
-    # unit vectors
     v1u = v1/np.linalg.norm(v1) 
     v2u = v2/np.linalg.norm(v2) 
     z = np.array([0,0,1])
 
     # side, cw or ccw
-    a = (math.atan2(v2[1],v2[0]) - math.atan2(v1[1],v1[0]))
-
-    # if convex (i.e. angle > pi) invert direction
-    #if a < -math.pi:
-    #    a += math.pi * 2
-    #elif a > math.pi:
-    #    a -= math.pi * 2
-
-    s = np.sign(a)
-
-    wx.LogWarning(f'NEW ang: {math.degrees(a)}, sign: {s}')
-
-    p1 = line_points(t1)
-    p2 = line_points(t2)
+    d = np.dot(v1u,v2u)
+    c = np.cross(v1u,v2u)
+    s = np.sign( np.dot(z,c) )
 
     v1n = np.cross( z, v1u ) 
     v2n = np.cross( z, v2u ) 
 
-    # apply offset
-    p1[0] = np.add(p1[0], f*v1n)
-    p1[1] = np.add(p1[1], f*v1n)
-    p2[0] = np.add(p2[0], f*v2n)
-    p2[1] = np.add(p2[1], f*v2n)
+    # offset lines
+    p1 = line_points(t1)
+    p2 = line_points(t2)
+    p1 = p1 + np.dot(s*f, v1n)
+    p2 = p2 + np.dot(s*f, v2n)
 
-    p = line_line_intersect(p1,p2)
+    # line intersection (i.e. fillet center)
+    c = line_line_intersect(p1,p2)
 
-    return p
+    return c
+
+# line-to-arc fillet
 
 
-def circles_intercept(x1,y1,r1, x2,y2,r2):
+
+def circle_circle_intersect(c1,r1,c2,r2):
     # https://math.stackexchange.com/questions/256100/how-can-i-find-the-points-at-which-two-circles-intersect
     # https://gist.github.com/jupdike/bfe5eb23d1c395d8a0a1a4ddd94882ac
     # https://gist.github.com/jupdike/bfe5eb23d1c395d8a0a1a4ddd94882ac?permalink_comment_id=3590178#gistcomment-3590178
+    x1 = c1[0]
+    y1 = c1[1]
+    x2 = c2[0]
+    y2 = c2[1]
 
     R = math.sqrt( (x1-x2)**2 + (y1-y2)**2 );
     #if not ( abs(r1 - r2) <= R and R <= r1 + r2):  
@@ -152,6 +222,12 @@ def circles_intercept(x1,y1,r1, x2,y2,r2):
 
     fx = (x1+x2) / 2 + a * (x2 - x1);
     gx = c * (y2 - y1) / 2;
+
+    wx.LogError(f'gx: {gx}')
+    
+    #note if gy == 0 and gx == 0 then the circles are tangent and there is only one solution
+    #but that one solution will just be duplicated as the code is currently written
+
     ix1 = fx + gx;
     ix2 = fx - gx;
 
@@ -160,13 +236,77 @@ def circles_intercept(x1,y1,r1, x2,y2,r2):
     iy1 = fy + gy;
     iy2 = fy - gy;
 
-    #note if gy == 0 and gx == 0 then the circles are tangent and there is only one solution
-    #but that one solution will just be duplicated as the code is currently written
+    
     return [ix1, iy1], [ix2, iy2];
 
+
 def line_arc_center(t1, t2, f):
+
+    t1_arc = t1.GetClass() == 'PCB_ARC'
+    t2_arc = t2.GetClass() == 'PCB_ARC'
+
+    if t1_arc:
+        # solve unit vectors
+        v1 = tangent(t1, end=True)    # use the tg to the arc at its END point
+        v2 = vec(t2)
+
+        v1u = v1/np.linalg.norm(v1)
+        v2u = v2/np.linalg.norm(v2) 
+        z = np.array([0,0,1])
+        
+        # side, cw or ccw
+        d = np.dot(v1u,v2u)
+        x = np.cross(v1u,v2u)
+        s = np.sign( np.dot(z,x) )
+
+        v2n = np.cross( z, v2u ) 
+
+        # offset circle
+        o = t1.GetCenter()
+        o = np.array([o.x, o.y])
+        r = t1.GetRadius() - f
+
+        # offset line
+        p2 = line_points(t2)
+        p2 = p2 + np.dot( s*f, v2n )
+
+        c = circle_line_intersect(p2, o, r)
+
+
+    elif t2_arc:
+        # solve unit vectors
+        v1 = vec(t1)
+        v2 = tangent(t2)    # use the tg to the arc at its START point
+
+        v1u = v1/np.linalg.norm(v1)
+        v2u = v2/np.linalg.norm(v2) 
+        z = np.array([0,0,1])
+
+        # side, cw or ccw
+        d = np.dot(v1u,v2u)
+        x = np.cross(v1u,v2u)
+        s = np.sign( np.dot(z,x) )
+
+        v1n = np.cross( z, v1u ) 
+        
+        # offset line
+        p1 = line_points(t1)
+        p1 = p1 + np.dot( s*f, v1n )
+
+        # offset circle
+        o = t2.GetCenter()
+        o = np.array([o.x, o.y])
+        r = t2.GetRadius() - f
+
+        c = circle_line_intersect(p1, o, r)
+
+    return c
+
+def line_arc_center_old(t1, t2, f):
     # Find fillet center, which is the intersection of the line track shifted by "fillet" 
     # and the arc line with reduced radius "r - fillet"
+
+    # returns: 1) the center, 2) the trim point on arc
 
     # t1: track 1 (linear)
     # t2: track 2 (arc)
@@ -209,11 +349,14 @@ def line_arc_center(t1, t2, f):
         # x1 = (-b + math.sqrt( b**2 - 4*a*c )) / (2*a)
         # x2 = (-b - math.sqrt( b**2 - 4*a*c )) / (2*a)
 
-    fe1, fe2 = circles_intercept(o.x,o.y,r, p[0],p[1],f)
+    fe1, fe2 = circle_circle_intersect(o.x,o.y,r, p[0],p[1],f)
     
     wx.LogWarning(f'circle intercepts: {fe1}, {fe2}')
 
     return p, fe1
+
+def arc_arc_center(t1, t2, f):
+    return
 
 def normalize(t):
     # returns (unit vector) direction of the track
