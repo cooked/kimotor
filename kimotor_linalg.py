@@ -44,6 +44,24 @@ def line_points(t):
     te = t.GetEnd()
     return np.array( [[ts.x, ts.y, 0], [te.x, te.y, 0]] )
 
+def line_offset(l, r):
+    # offset a line l by distance r (+ shifts L, - shifts R)
+    
+    p1 = l[0]
+    p2 = l[1]
+
+    vl = np.array([ p2[0]-p1[0], p2[1]-p1[1], 0 ])
+    vlu = vl/np.linalg.norm(vl)
+    z = np.array([0,0,1])
+    
+    # ortho
+    vln = np.cross( z, vlu )
+
+    p1 = p1 + np.dot(r,vln)
+    p2 = p2 + np.dot(r,vln)
+
+    return np.array([p1, p2])
+
 def circle_line_tg(l, c,r):
 
     p1 = l[0]
@@ -119,7 +137,11 @@ def circle_arc_mid(p1,p2, c,r):
     return c + np.dot(r,v)
 
 
-def circle_line_intersect(l, c,r):
+def circle_line_intersect(l, c,r, ref=1):
+    # l: 2D array of the line points
+    # c: circle center
+    # r: circle radius
+    # ref: linepoint to use as reference (0=start, 1=end)
 
     # TODO: this fails for dx=0 (m=inf)
     m,k = line(l)
@@ -130,19 +152,24 @@ def circle_line_intersect(l, c,r):
     a = 1+m**2
     b = 2 * (m*k - m*yc - xc)
     c = k**2 + xc**2 + yc**2 - r**2 - 2*k*yc
-    # FIXME: this is cheating.... fix the numerical stability 
-    # such that the discriminant is 0 or positive
-    dsc = np.abs(b**2 - 4*a*c)
 
-    # FIXME: more and more patches... this is for the 2nd quadrant
-    if l[1][0]-l[0][0]<0:
-        x = (-b - math.sqrt(dsc)) / (2*a)
-    else:
-        x = (-b + math.sqrt(dsc)) / (2*a)
+    dsc = b**2 - 4*a*c
+    #wx.LogError(f'dsc {dsc}')
+    #dsc = np.abs(dsc)
 
-    y = m*x + k
+    # pick the intersect point closest to the selected reference 
+    # point (start or end) of the line
+    pref = np.array(l[ref])
+    x1 = (-b - math.sqrt(dsc)) / (2*a)
+    p1 = np.array([x1, m*x1 + k, 0])
+    x2 = (-b + math.sqrt(dsc)) / (2*a)
+    p2 = np.array([x2, m*x2 + k, 0])
+    
+    d1 = np.linalg.norm(p1-pref)
+    d2 = np.linalg.norm(p2-pref)
 
-    return np.array([x, y, 0])
+    # TODO: what if equal? we should add a check beforehand
+    return p1 if d1<d2 else p2
 
 
 # line-to-line fillet
@@ -197,7 +224,6 @@ def line_line_center(t1,t2, f):
     return c
 
 # line-to-arc fillet
-
 
 
 def circle_circle_intersect(c1,r1,c2,r2):
@@ -270,7 +296,7 @@ def line_arc_center(t1, t2, f):
         p2 = line_points(t2)
         p2 = p2 + np.dot( s*f, v2n )
 
-        c = circle_line_intersect(p2, o, r)
+        c = circle_line_intersect(p2, o, r, 0)
 
 
     elif t2_arc:
@@ -298,7 +324,7 @@ def line_arc_center(t1, t2, f):
         o = np.array([o.x, o.y])
         r = t2.GetRadius() - f
 
-        c = circle_line_intersect(p1, o, r)
+        c = circle_line_intersect(p1, o, r, 1)
 
     return c
 
@@ -368,7 +394,7 @@ def tangent(t, end = False):
     to = t.GetCenter()
     tp = t.GetEnd() if end else t.GetStart()
     rd = np.array([ tp.x-to.x, tp.y-to.y, 0]) / t.GetRadius()
-    z = np.array([0,0,-1])
+    z = np.array([0,0,1])
     return np.cross(rd, z)
 
 def angle_and_bisect(t1, t2):

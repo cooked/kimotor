@@ -23,7 +23,6 @@ def fillet(board, t1, t2, r):
         return
 
     elif t1_arc:
-        return
 
         # center
         c = kla.line_arc_center(t1, t2, r)
