@@ -20,15 +20,12 @@ class KiMotor(pcbnew.ActionPlugin):
         self.description = "KiMotor - Design of parametric axial-flux motor stators"
         self.show_toolbar_button = True # Optional, defaults to False
         self.icon_file_name = os.path.join(os.path.dirname(__file__), 'flexibility.png') # Optional, defaults to ""
-
     def Run( self ):
         # grab editor frame and board
         self.frame = wx.FindWindowByName("PcbFrame")
         self.board = pcbnew.GetBoard()
-        
         dlg = KiMotorDialog(self.frame, self.board)
         dlg.Show()
-
 
 class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
      
@@ -73,6 +70,11 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.ri = int(self.m_ctrlDin.GetValue() * 1e6 / 2)
         self.rb = int(self.m_ctrlDbore.GetValue() * 1e6 / 2)
 
+        self.mhon = int(self.m_mhOut.GetValue())
+        self.mhor = int(self.m_mhOutR.GetValue() * 1e6 / 2)
+        self.mhin = int(self.m_mhIn.GetValue())
+        self.mhir = int(self.m_mhInR.GetValue() * 1e6 / 2)
+
         self.d_drill = int(0.2 * 1e6)   # min drill size
 
         self.group = pcbnew.PCB_GROUP( self.board )
@@ -86,9 +88,11 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # place mounting holes
         self.do_mounts()
         # design the board edges
-        self.do_outline( 1.05*self.ro, self.rb )
+        self.do_outline( self.ro, self.rb )
         # thermal zones
         self.do_thermal()
+        # draw silks
+        #self.do_silk()
 
         # update board
         pcbnew.Refresh()
@@ -191,6 +195,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         return [cs,ce] 
 
+    # run the coil task
     def do_coils(self, ln):
         # ln: nr of layers
 
@@ -224,8 +229,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #w2 = 10 * 1e6 #ri * math.cos(th0/2 - dth)
 
         # coil (corners, mid-points)
-        pcu0, pcu0m = self.coil_solver(self.ri, self.ro, dr, dr, th0, self.loops, 0)
-        pcu1, pcu1m = self.coil_solver(self.ri, self.ro, dr, dr, th0, self.loops, 1)
+        pcu0, pcu0m = self.coil_solver(self.ri, int(0.9*self.ro), dr, dr, th0, self.loops, 0)
+        pcu1, pcu1m = self.coil_solver(self.ri, int(0.9*self.ro), dr, dr, th0, self.loops, 1)
 
         # poles
         for p in range(self.poles):
@@ -261,6 +266,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # pass coil terminals
         return coil_t
 
+    # run the connecting rings task
     def do_races(self, dr):
         
         pp = int(self.poles/2)
@@ -316,8 +322,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         cro = self.ro + 2*dr
 
         for i in [-1,1]:
-
-            wx.LogError(f' {i}')
             # start, end, and mid angle
             ths = ph_shift + i * ph_space 
             the = ths + i * th0
@@ -335,33 +339,32 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.board.Add(conn)
             self.group.AddItem(conn)
         # TODO: return motor terminals
-        
+    
+    # run the thermal zones task
     def do_thermal(self):
-        # TODO: copper
-        
-        fs = int(15*1e6)
+        # see refill: 
+        # https://forum.kicad.info/t/python-scripting-refill-all-zones/35834
+        # TODO: circle copper area, circle keepout, no solder mask area, 
+        # add vias, add cooling fingers (TBD)
 
-        sps = pcbnew.SHAPE_POLY_SET(self.board)
-        sps.SetVertex(fs,fs)
-        sps.SetVertex(-fs,fs)
-        sps.SetVertex(-fs,-fs)
-        sps.SetVertex(fs,-fs)
-        sps.SetVertex(fs,fs)
+        fs = 1.05*self.ro
 
-        z = pcbnew.PCB_ZONE(self.board)
+        #sps = pcbnew.SHAPE_POLY_SET(self.board)
+        points = (
+            pcbnew.wxPoint(fs,fs),
+            pcbnew.wxPoint(-fs,fs),
+            pcbnew.wxPoint(-fs,-fs),
+            pcbnew.wxPoint(fs,-fs)
+        )
+        z = pcbnew.ZONE(self.board)
         z.SetLayer(pcbnew.F_Cu)
-        #z.AppendCorner( pcbnew.wxPoint(fs,fs) )
-        #z.AppendCorner( pcbnew.wxPoint(-fs,fs) )
-        #z.AppendCorner( pcbnew.wxPoint(-fs,-fs) )
-        #z.AppendCorner( pcbnew.wxPoint(fs,-fs) )
-        z.SetFilledPolyList( pcbnew.F_Cu, sps)
-
-        #shape = polygon.GetPolyShape()  # type: pcbnew.SHAPE_POLY_SET
-        #shape.NewOutline()  
-        
+        z.AddPolygon( pcbnew.wxPoint_Vector(points) )
+        z.SetIsFilled(True)
         self.board.Add(z)
-        # TODO: vias
 
+        # fill board
+        filler = pcbnew.ZONE_FILLER(self.board) # create the filler provide the board as a param
+        filler.Fill(self.board.Zones())
 
     def do_coils_terminals(self, coil_t, dr, dri):
         # start with a simple 6-pole, 3-phase connections
@@ -552,34 +555,74 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         return 0
 
-    def do_thermal(self):
-        # TODO:
-        return 0
-
     def do_mounts(self):
-        # TODO:
+        # no: number of outer mount points
+        # ni: number of inner shaft mount points
+        # see https://forum.kicad.info/t/place-update-footprint-with-python/23103
+
+        # FIXME: absolute path needed!!!!... but find a way to get it from the config file
+        MH_LIBPATH = "/home/stefano/KiCadDB_6/kicad-footprints/MountingHole.pretty"
+        MH_FOOTPRINT = "MountingHole_2.2mm_M2_Pad_Via"
+
+        #mod.SetPosition( pcbnew.wxPoint( 0,0 ) )
+        #self.board.Add(mod)
+        #newMod.SetReference("D%d-%d" % (seg, ledCount))
+        
+        # inner/outer holes, nr and radial location
+        nmo = self.mhon
+        nmi = self.mhin
+        rmo = int(0.95*self.mhor)
+        rmi = self.mhir
+
+        th0 = math.radians(360/nmo)
+        thadj = math.radians(0)
+        for p in range(nmo):
+            # (inner) concentric arc races
+            # start, end, and mid angle
+            th = th0*p + thadj
+            m = pcbnew.FootprintLoad( MH_LIBPATH, MH_FOOTPRINT )
+            #m = pcbnew.MODULE(mod)
+            m.SetPosition( 
+                pcbnew.wxPoint( int(rmo * math.cos(th)), int(rmo * math.sin(th))) )
+            self.board.Add(m)
+
+        th0 = math.radians(360/nmi)
+        thadj = math.radians(0)
+        for p in range(nmi):
+            # (inner) concentric arc races
+            # start, end, and mid angle
+            th = th0*p + thadj
+            m = pcbnew.FootprintLoad( MH_LIBPATH, MH_FOOTPRINT )
+            #m = pcbnew.MODULE(mod)
+            m.SetPosition( 
+                pcbnew.wxPoint( int(rmi * math.cos(th)), int(rmi * math.sin(th))) )
+            self.board.Add(m)
+
         return 0
 
-    def do_outline(self, ro, rb):
+    def do_outline(self, r1, r2):
         
-        arc = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_ARC)
-        arc.SetArcGeometry( 
-            pcbnew.wxPoint( ro, 0),
-            pcbnew.wxPoint( -ro, 0),
-            pcbnew.wxPoint( ro,  0))
-        arc.SetLayer( pcbnew.Edge_Cuts )
-        self.board.Add(arc)
-        self.group.AddItem(arc)
-        
-        arc = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_ARC)
-        arc.SetArcGeometry( 
-            pcbnew.wxPoint( rb, 0),
-            pcbnew.wxPoint( -rb, 0),
-            pcbnew.wxPoint( rb, 0))
-        arc.SetLayer( pcbnew.Edge_Cuts )
-        self.board.Add(arc)
-        self.group.AddItem(arc)
+        for r in [r1,r2]:
+            arc = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_ARC)
+            arc.SetArcGeometry( 
+                pcbnew.wxPoint( r, 0),
+                pcbnew.wxPoint( -r, 0),
+                pcbnew.wxPoint( r,  0))
+            arc.SetLayer( pcbnew.Edge_Cuts )
+            self.board.Add(arc)
+            self.group.AddItem(arc)
 
+
+    def do_silk(self):
+        # mark coil area
+        for r in [self.ro, self.ri]:
+            c = pcbnew.DRAWSEGMENT()
+            c.SetShape(pcbnew.S_CIRCLE)
+            c.SetCenter(pcbnew.wxPoint(0,0))
+            c.SetArcStart( pcbnew.wxPoint(0,r) )
+            c.SetLayer(pcbnew.F_Silkscreen)
+            c.SetWidth( int(1*1e6) )
+            self.board.Add(c)
 
     # tests
     def test(self):
