@@ -124,6 +124,16 @@ def circle_circle_tg(p1,r1,p2,r2):
 
     return t
 
+def track_arc_trim(t, ne):
+    # takes an arc track and trims it to the given ne (new end) point
+    s = t.GetStart()
+    c = t.GetCenter()
+    r = t.GetRadius()
+    
+    m = circle_arc_mid( [s.x, s.y], [ne.x, ne.y], [c.x, c.y, 0], r )
+    
+    return pcbnew.wxPoint(m[0],m[1])
+
 def circle_arc_mid(p1,p2, c,r):
     
     # mid point of segment connecting arc end points
@@ -281,11 +291,10 @@ def line_arc_center(t1, t2, f):
         z = np.array([0,0,1])
         
         # side, cw or ccw
-        d = np.dot(v1u,v2u)
-        x = np.cross(v1u,v2u)
+        x = np.cross(v2u,v1u)   # !!!IMPORTANT!!!: order inverted wrt t2_arc
         s = np.sign( np.dot(z,x) )
 
-        v2n = np.cross( z, v2u ) 
+        v2n = np.cross( [0,0,s], v2u ) 
 
         # offset circle
         o = t1.GetCenter()
@@ -294,7 +303,7 @@ def line_arc_center(t1, t2, f):
 
         # offset line
         p2 = line_points(t2)
-        p2 = p2 + np.dot( s*f, v2n )
+        p2 = p2 + np.dot( f, v2n )
 
         c = circle_line_intersect(p2, o, r, 0)
 
@@ -309,15 +318,14 @@ def line_arc_center(t1, t2, f):
         z = np.array([0,0,1])
 
         # side, cw or ccw
-        d = np.dot(v1u,v2u)
         x = np.cross(v1u,v2u)
         s = np.sign( np.dot(z,x) )
 
-        v1n = np.cross( z, v1u ) 
+        v1n = np.cross( [0,0,s], v1u ) 
         
         # offset line
         p1 = line_points(t1)
-        p1 = p1 + np.dot( s*f, v1n )
+        p1 = p1 + np.dot( f, v1n )
 
         # offset circle
         o = t2.GetCenter()
@@ -390,12 +398,28 @@ def normalize(t):
     return n / t.GetLength()
 
 def tangent(t, end = False):
+    
     # find direction of tangent at start (or end) of arc track
     to = t.GetCenter()
-    tp = t.GetEnd() if end else t.GetStart()
-    rd = np.array([ tp.x-to.x, tp.y-to.y, 0]) / t.GetRadius()
+    s = t.GetStart()
+    e = t.GetEnd()
+    
+    tp1 = e if end else s
+    tp2 = s if end else e
+
+    # radius direction
+    rv = np.array([ tp1.x-to.x, tp1.y-to.y, 0]) / t.GetRadius()
+    # p1 to p2 direction
+    dx = tp2.x-tp1.x
+    dy = tp2.y-tp1.y
+    n = math.sqrt(dx**2+dy**2)
+    pv = np.array([ dx/n, dy/n, 0])
+    
+    x = np.cross(rv,pv)
     z = np.array([0,0,1])
-    return np.cross(rd, z)
+    s = np.sign( np.dot(z,x) )
+
+    return np.cross([0,0,s], rv)
 
 def angle_and_bisect(t1, t2):
     # find angle and bisect vector between tracks, using tangent if track is arc

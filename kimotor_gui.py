@@ -119,6 +119,23 @@ class KiMotorGUI ( wx.Frame ):
 
 		sbSizer1 = wx.StaticBoxSizer( wx.StaticBox( self.m_panel1, wx.ID_ANY, u"Electrical specs" ), wx.VERTICAL )
 
+		bSizer212 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time12 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"PCB layers:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.lbl_refresh_time12.Wrap( -1 )
+
+		bSizer212.Add( self.lbl_refresh_time12, 0, wx.ALL, 5 )
+
+
+		bSizer212.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.m_ctrlLayers = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 200,-1 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 2, 6, 2, 2 )
+		self.m_ctrlLayers.SetDigits( 0 )
+		bSizer212.Add( self.m_ctrlLayers, 0, wx.ALL, 5 )
+
+
+		sbSizer1.Add( bSizer212, 1, wx.EXPAND, 5 )
+
 		bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.lbl_refresh_time = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Poles:", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -129,28 +146,12 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer2.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlPoles = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 3, 60, 6, 3 )
+		self.m_ctrlPoles = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 200,-1 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 3, 60, 6, 3 )
 		self.m_ctrlPoles.SetDigits( 0 )
 		bSizer2.Add( self.m_ctrlPoles, 0, wx.ALL, 5 )
 
 
 		sbSizer1.Add( bSizer2, 0, wx.EXPAND, 5 )
-
-		bSizer212 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.lbl_refresh_time12 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Coil layers:", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.lbl_refresh_time12.Wrap( -1 )
-
-		bSizer212.Add( self.lbl_refresh_time12, 0, wx.ALL, 5 )
-
-
-		bSizer212.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-
-		self.m_ctrlLayers = wx.SpinCtrl( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 2, 6, 4 )
-		bSizer212.Add( self.m_ctrlLayers, 0, wx.ALL, 5 )
-
-
-		sbSizer1.Add( bSizer212, 1, wx.EXPAND, 5 )
 
 		bSizer21 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -162,7 +163,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer21.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlLoops = wx.SpinCtrl( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 1, 999, 20 )
+		self.m_ctrlLoops = wx.SpinCtrl( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 200,-1 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 1, 999, 20 )
 		bSizer21.Add( self.m_ctrlLoops, 0, wx.ALL, 5 )
 
 
@@ -170,15 +171,17 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer211 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.lbl_refresh_time11 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Track width [mm]:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.lbl_refresh_time11 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Track width:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.lbl_refresh_time11.Wrap( -1 )
+
+		self.lbl_refresh_time11.SetToolTip( u"Trace width in [mm]" )
 
 		bSizer211.Add( self.lbl_refresh_time11, 0, wx.ALL, 5 )
 
 
 		bSizer211.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlTrackWidth = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 10, 0.2, 0.1 )
+		self.m_ctrlTrackWidth = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 200,-1 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 10, 0.2, 0.1 )
 		self.m_ctrlTrackWidth.SetDigits( 2 )
 		bSizer211.Add( self.m_ctrlTrackWidth, 0, wx.ALL, 5 )
 
