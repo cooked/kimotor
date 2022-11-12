@@ -3,6 +3,7 @@ import pcbnew
 import os
 import numpy as np
 import math
+import json
 
 if __name__ == '__main__':
     import kimotor_gui
@@ -28,7 +29,7 @@ class KiMotor(pcbnew.ActionPlugin):
         dlg.Show()
 
 class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
-     
+    
     def __init__(self,  parent, board):
         kimotor_gui.KiMotorGUI.__init__(self, parent)
         self.board = board
@@ -42,6 +43,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.di = 0
         self.db = 0
 
+        # init library paths and other config items
+        self.init_config()
+            
     # event handlers
     def on_btn_clear(self, event):
         #self.logger.info("Cleared existing coils")
@@ -99,6 +103,14 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
 
     # helpers
+    def init_config(self):
+        # init paths
+        settings = pcbnew.SETTINGS_MANAGER_GetUserSettingsPath()
+        with open(settings+'/kicad_common.json', 'r') as f:
+            data = json.load(f)
+            
+            self.fp_path = data['environment']['vars']['KICAD6_FOOTPRINT_DIR']
+        
 
     # compute the coil points
     def coil_solver(self, r1,r2, dr0, dr,th,turns,dir):
@@ -555,19 +567,15 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         return 0
 
+    
     def do_mounts(self):
         # no: number of outer mount points
         # ni: number of inner shaft mount points
         # see https://forum.kicad.info/t/place-update-footprint-with-python/23103
 
-        # FIXME: absolute path needed!!!!... but find a way to get it from the config file
-        MH_LIBPATH = "/home/stefano/KiCadDB_6/kicad-footprints/MountingHole.pretty"
+        MH_LIBPATH = self.fp_path + '/MountingHole.pretty'
         MH_FOOTPRINT = "MountingHole_2.2mm_M2_Pad_Via"
 
-        #mod.SetPosition( pcbnew.wxPoint( 0,0 ) )
-        #self.board.Add(mod)
-        #newMod.SetReference("D%d-%d" % (seg, ledCount))
-        
         # inner/outer holes, nr and radial location
         nmo = self.mhon
         nmi = self.mhin
@@ -623,7 +631,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             c.SetLayer(pcbnew.F_Silkscreen)
             c.SetWidth( int(1*1e6) )
             self.board.Add(c)
-
+   
     # tests
     def test(self):
         
