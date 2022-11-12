@@ -111,6 +111,18 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             
             self.fp_path = data['environment']['vars']['KICAD6_FOOTPRINT_DIR']
         
+    def update_lset(self):
+        
+        ln = self.nl
+
+        self.layset = [pcbnew.F_Cu]
+        if ln >= 4:
+            self.layset.append(pcbnew.In1_Cu)
+            self.layset.append(pcbnew.In2_Cu) 
+        if ln == 6:
+            self.layset.append(pcbnew.In3_Cu)
+            self.layset.append(pcbnew.In4_Cu)
+        self.layset.append(pcbnew.B_Cu) 
 
     # compute the coil points
     def coil_solver(self, r1,r2, dr0, dr,th,turns,dir):
@@ -368,8 +380,14 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             pcbnew.wxPoint(-fs,-fs),
             pcbnew.wxPoint(fs,-fs)
         )
+
+        self.update_lset()
+
         z = pcbnew.ZONE(self.board)
-        z.SetLayer(pcbnew.F_Cu)
+        ls = pcbnew.LSET()
+        for l in self.layset:
+            ls.addLayer(l)
+        z.SetLayerSet(ls)
         z.AddPolygon( pcbnew.wxPoint_Vector(points) )
         z.SetIsFilled(True)
         self.board.Add(z)
@@ -573,8 +591,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # ni: number of inner shaft mount points
         # see https://forum.kicad.info/t/place-update-footprint-with-python/23103
 
-        MH_LIBPATH = self.fp_path + '/MountingHole.pretty'
-        MH_FOOTPRINT = "MountingHole_2.2mm_M2_Pad_Via"
+        fp_lib = self.fp_path + '/MountingHole.pretty'
+        fp = "MountingHole_2.2mm_M2_Pad_Via"
 
         # inner/outer holes, nr and radial location
         nmo = self.mhon
@@ -588,7 +606,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             # (inner) concentric arc races
             # start, end, and mid angle
             th = th0*p + thadj
-            m = pcbnew.FootprintLoad( MH_LIBPATH, MH_FOOTPRINT )
+            m = pcbnew.FootprintLoad( fp_lib, fp )
             #m = pcbnew.MODULE(mod)
             m.SetPosition( 
                 pcbnew.wxPoint( int(rmo * math.cos(th)), int(rmo * math.sin(th))) )
@@ -600,7 +618,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             # (inner) concentric arc races
             # start, end, and mid angle
             th = th0*p + thadj
-            m = pcbnew.FootprintLoad( MH_LIBPATH, MH_FOOTPRINT )
+            m = pcbnew.FootprintLoad( fp_lib, fp )
             #m = pcbnew.MODULE(mod)
             m.SetPosition( 
                 pcbnew.wxPoint( int(rmi * math.cos(th)), int(rmi * math.sin(th))) )
