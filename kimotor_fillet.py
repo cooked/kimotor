@@ -50,6 +50,7 @@ def fillet(board, t1, t2, r):
         # do arc
         t = pcbnew.PCB_ARC(board)
         t.SetLayer( t1.GetLayer() )
+        t.SetWidth( t1.GetWidth() )
         t.SetStart( kp1)
         t.SetMid( km )
         t.SetEnd( kp2 )
@@ -82,6 +83,7 @@ def fillet(board, t1, t2, r):
         # do arc
         t = pcbnew.PCB_ARC(board)
         t.SetLayer( t1.GetLayer() )
+        t.SetWidth( t1.GetWidth() )
         t.SetStart( kp1)
         t.SetMid( km )
         t.SetEnd( kp2 )
@@ -117,6 +119,7 @@ def fillet(board, t1, t2, r):
         # generate fillet track 
         t = pcbnew.PCB_ARC(board)
         t.SetLayer( t1.GetLayer() )
+        t.SetWidth( t1.GetWidth() )
         t.SetStart( kp1)
         t.SetMid( km )
         t.SetEnd( kp2 )
