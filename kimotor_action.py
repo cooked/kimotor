@@ -18,7 +18,7 @@ class KiMotor(pcbnew.ActionPlugin):
     def defaults(self):
         self.name = "KiMotor"
         self.category = "Modify Drawing PCB"
-        self.description = "KiMotor - Design of parametric axial-flux motor stators"
+        self.description = "KiMotor - Parametric PCB stator design"
         self.show_toolbar_button = True # Optional, defaults to False
         self.icon_file_name = os.path.join(os.path.dirname(__file__), 'flexibility.png') # Optional, defaults to ""
     def Run( self ):
@@ -57,7 +57,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # connect coils
         ext_t, int_t = self.do_races(self.dr, ro, self.ri)
         self.do_junctions( coil_t, ext_t, int_t)
-        #self.do_terminals_motor( trm_t )
+        self.do_terminals_motor( ext_t )
 
         #self.do_coils_terminals(coil_t, self.dr, 3*self.dr)
         
@@ -114,7 +114,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         self.d_drill = int(0.2 * self.SCALE)   # min drill size
 
-
     def update_lset(self):
         self.layset = [pcbnew.F_Cu]
         if self.nl >= 4:
@@ -124,6 +123,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.layset.append(pcbnew.In3_Cu)
             self.layset.append(pcbnew.In4_Cu)
         self.layset.append(pcbnew.B_Cu) 
+
 
     # compute the coil points
     def coil_solver(self, r1,r2, dr0, dr,th,turns,dir):
@@ -302,7 +302,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     # run the connecting rings task
     def do_races(self, dr, ro, ri):
         
-        ext_t = int_t = []
+        ext_t = []
+        int_t = []
 
         # add some space fro mthe coil inner side
         ri -= 2*self.trk_w
@@ -355,31 +356,31 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             conn.SetEnd( re )
             self.board.Add(conn)
             self.group.AddItem(conn)
-
              # track ends towards the coil (towards motor internals)
              # track starts at motor terminal (towards outside world)
             ext_t.append([rs,re])   
         
         # star-connection race
-        # cri = ri - (4+pp)*dr
-        # # TODO: generalize
-        # ths = thadj
-        # the = math.pi + thadj
-        # thm = (the+ths)/2
-        # # start, end, and mid angle
-        # rs = pcbnew.wxPoint( cri*math.cos(ths), cri*math.sin(ths) )
-        # rm = pcbnew.wxPoint( cri*math.cos(thm), cri*math.sin(thm) )
-        # re = pcbnew.wxPoint( cri*math.cos(the), cri*math.sin(the) )
-        # conn = pcbnew.PCB_ARC(self.board)
-        # conn.SetLayer(pcbnew.F_Cu)
-        # conn.SetWidth(self.trk_w)
-        # conn.SetStart( rs )
-        # conn.SetMid( rm )
-        # conn.SetEnd( re )
-        # self.board.Add(conn)
-        # self.group.AddItem(conn)
+        cri = ri-(4+pp)*dr
+        ths = pp*th0 - th0/2
+        the = ths + (pp-1)*th0
+        thm = (the+ths)/2
+        # start, end, and mid angle
+        rs = pcbnew.wxPoint( cri*math.cos(ths), cri*math.sin(ths) )
+        rm = pcbnew.wxPoint( cri*math.cos(thm), cri*math.sin(thm) )
+        re = pcbnew.wxPoint( cri*math.cos(the), cri*math.sin(the) )
+        conn = pcbnew.PCB_ARC(self.board)
+        conn.SetLayer(pcbnew.F_Cu)
+        conn.SetWidth(self.trk_w)
+        conn.SetStart( rs )
+        conn.SetMid( rm )
+        conn.SetEnd( re )
+        self.board.Add(conn)
+        self.group.AddItem(conn)
+        # here append also the mid point
+        int_t.append([rs,rm,re]) 
 
-        #  terminals tracks, inter-coils tracks (incl. star-connection as last))
+        #  terminals tracks, inter-coils tracks (incl. star-connection as last of int_t))
         return ext_t, int_t;
     
     def do_junctions(self, coil, ext_t, int_t):
@@ -387,231 +388,88 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # trm: contains terminals' races end points
         # int: internal races (3 coil-coil + 1 start connections)..all have start,mid,end points
 
+        wx.LogWarning(f'{ext_t}')
+
         # junction: motor terminal bus bars (races) to coils terminals
-        # for i, t in enumerate(ext_t):
-        #     j = pcbnew.PCB_TRACK(self.board)
-        #     j.SetLayer(pcbnew.F_Cu)
-        #     j.SetWidth(self.trk_w)
-        #     j.SetStart( t[0] )
-        #     j.SetEnd( coil[i*2] )
-        #     self.board.Add(j)
-        #     #self.group.AddItem(j)
+        for i, et in enumerate(ext_t):
+            j = pcbnew.PCB_TRACK(self.board)
+            j.SetLayer(pcbnew.F_Cu)
+            j.SetWidth(self.trk_w)
+            j.SetStart( et[1] )
+            j.SetEnd( coil[i][0] )
+            self.board.Add(j)
+            #self.group.AddItem(j)
+
+        # TODO: generalize (other than 3)
+        n = 3
 
         # junction: coil to coil connections
-
-        # how many coil are connected o nthe phase?
-        for p in range(3):
-    
-            # get coils terminals
-            # TODO: generalize (other that range(3))
+        # how many coil are connected on the phase?
+        for p in range(n):
+            # prep points
             rs = int_t[p][0]
             re = int_t[p][1]
             c1s = coil[p][1]
-            c2s = coil[p+3][0] 
+            c2s = coil[p+n][0] 
+            cd = coil[p+n][1] 
 
-        
-            # juncion start (last layer)
-            conn = pcbnew.PCB_TRACK(self.board)
-            conn.SetLayer(pcbnew.B_Cu)
-            conn.SetWidth(self.trk_w)
-            conn.SetStart( c1s )
-            conn.SetEnd( rs )
-            self.board.Add(conn)
-            self.group.AddItem(conn)
-            # # inner juncion end (last layer)
-            # conn = pcbnew.PCB_TRACK(self.board)
-            # conn.SetLayer(pcbnew.B_Cu)
-            # conn.SetWidth(self.trk_w)
-            # conn.SetStart( re )
-            # conn.SetEnd( c2s )
-            # self.board.Add(conn)
-            # self.group.AddItem(conn)
+            # jumper 1 (last layer)
+            j = pcbnew.PCB_TRACK(self.board)
+            j.SetLayer(pcbnew.B_Cu)
+            j.SetWidth(self.trk_w)
+            j.SetStart( c1s )
+            j.SetEnd( rs )
+            self.board.Add(j)
+            self.group.AddItem(j)
+            via = pcbnew.PCB_VIA(self.board)
+            via.SetPosition( j.GetEnd() )
+            via.SetDrill( self.d_drill )
+            via.SetWidth( self.trk_w )
+            self.board.Add(via)
+            self.group.AddItem(via)
+            # jumper 2 (last layer)
+            j = pcbnew.PCB_TRACK(self.board)
+            j.SetLayer(pcbnew.F_Cu)
+            j.SetWidth(self.trk_w)
+            j.SetStart( re )
+            j.SetEnd( c2s )
+            self.board.Add(j)
+            self.group.AddItem(j)
+
+            # start-connect jumper
+            j = pcbnew.PCB_TRACK(self.board)
+            j.SetLayer(pcbnew.B_Cu)
+            j.SetWidth(self.trk_w)
+            j.SetStart( cd )
+            j.SetEnd( int_t[3][p] )
+            self.board.Add(j)
+            self.group.AddItem(j)
+            via = pcbnew.PCB_VIA(self.board)
+            via.SetPosition( j.GetEnd() )
+            via.SetDrill( self.d_drill )
+            via.SetWidth( self.trk_w )
+            self.board.Add(via)
+            self.group.AddItem(via)
 
         return 0
 
-    def do_terminals_motor(self, points):
+    def do_terminals_motor(self, ext_t):
         
         fp_lib = self.fp_path + '/Connector_Pin.pretty'
         fp = "Pin_D1.0mm_L10.0mm"
 
         rot = math.radians(360/self.poles) / 2
 
-        for pos in points:
+        for t in ext_t:
             # (inner) concentric arc races
             # start, end, and mid angle
             m = pcbnew.FootprintLoad( fp_lib, fp )
-            m.SetPosition( pos )
-            m.Rotate( pos, rot )
+            m.SetPosition( t[0] )
+            m.Rotate( t[0], rot )
             self.board.Add(m)
 
         return 0
 
-    def do_coils_terminals(self, coil_t, dr, dri):
-        # start with a simple 6-pole, 3-phase connections
-        # draw terminals 
-        
-        # dr: spacing between connection rings
-        # dri: spacing between connection rings
-        th0 = math.radians(360/self.poles)
-
-        # coil terminals
-        delta_c = []
-
-        # rot adj (manual) to make jumper parallel to coil sides
-        thadj = math.radians(10)
-
-        for p in range(3):
-            
-            # concentric rings/arcs
-            crb = self.rb + dri + p*dr
-            cro = (self.ro + dri + p*dr)
-
-            # start, end, and mid angle
-            ths = th0*p + thadj
-            the = ths + 2/3*math.pi + thadj
-            thm = (ths+the)/2
-
-            # get coils terminals
-            # TODO: generalize
-            c1s, c1e = coil_t[p]
-            c2s, c2e = coil_t[p+3]
-
-            # inner rings
-            rs = pcbnew.wxPoint( crb*math.cos(ths), crb*math.sin(ths) )
-            re = pcbnew.wxPoint( crb*math.cos(the), crb*math.sin(the) )
-            rm = pcbnew.wxPoint( crb*math.cos(thm), crb*math.sin(thm) )
-
-
-
-            via = pcbnew.PCB_VIA(self.board)
-            via.SetPosition( c1s )
-            via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
-            self.board.Add(via)
-            self.group.AddItem(via)
-
-            via = pcbnew.PCB_VIA(self.board)
-            via.SetPosition( rs )
-            via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
-            self.board.Add(via)
-            self.group.AddItem(via)
-
-            
-
-            via = pcbnew.PCB_VIA(self.board)
-            via.SetPosition( re )
-            via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
-            self.board.Add(via)
-            self.group.AddItem(via)
-
-            via = pcbnew.PCB_VIA(self.board)
-            via.SetPosition( c2s )
-            via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
-            self.board.Add(via)
-            self.group.AddItem(via)
-
-
-
-            # inner juncion end (opposite side)
-            conn = pcbnew.PCB_TRACK(self.board)
-            conn.SetLayer(pcbnew.B_Cu)
-            conn.SetWidth(self.trk_w)
-            conn.SetStart( re )
-            conn.SetEnd( c1e )
-            self.board.Add(conn)
-            self.group.AddItem(conn)
-
-            via = pcbnew.PCB_VIA(self.board)
-            via.SetPosition( re )
-            via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
-            self.board.Add(via)
-            self.group.AddItem(via)
-            via = pcbnew.PCB_VIA(self.board)
-            via.SetPosition( c1e )
-            via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
-            self.board.Add(via)
-            self.group.AddItem(via)
-            # coil star connection terminal
-            via = pcbnew.PCB_VIA(self.board)
-            via.SetPosition( c2e )
-            via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
-            self.board.Add(via)
-            self.group.AddItem(via)
-
-            # store terminal for the jummper track
-            delta_c.append(c2e)
-
-            # motor terminal
-            via = pcbnew.PCB_VIA(self.board)
-            via.SetPosition( rs )
-            via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
-            self.board.Add(via)
-            self.group.AddItem(via)
-
-
-        # create delta connection
-        ths = th0 * 3 + thadj
-        the = th0 * 5 + thadj
-        thm = (the+ths)/2
-
-        rs = pcbnew.wxPoint( cro*math.cos(ths), cro*math.sin(ths) )
-        rm = pcbnew.wxPoint( cro*math.cos(thm), cro*math.sin(thm) )
-        re = pcbnew.wxPoint( cro*math.cos(the), cro*math.sin(the) )
-
-        via = pcbnew.PCB_VIA(self.board)
-        via.SetPosition( rs )
-        via.SetDrill( self.d_drill )
-        via.SetWidth( self.trk_w )
-        self.board.Add(via)
-        self.group.AddItem(via)
-
-        via = pcbnew.PCB_VIA(self.board)
-        via.SetPosition( rm )
-        via.SetDrill( self.d_drill )
-        via.SetWidth( self.trk_w )
-        self.board.Add(via)
-        self.group.AddItem(via)
-
-        via = pcbnew.PCB_VIA(self.board)
-        via.SetPosition( re )
-        via.SetDrill( self.d_drill )
-        via.SetWidth( self.trk_w )
-        self.board.Add(via)
-        self.group.AddItem(via)
-
-        
-        conn = pcbnew.PCB_TRACK(self.board)
-        conn.SetLayer(pcbnew.B_Cu)
-        conn.SetWidth(self.trk_w)
-        conn.SetStart( rs )
-        conn.SetEnd( delta_c[0] )
-        self.board.Add(conn)
-        self.group.AddItem(conn)
-
-        conn = pcbnew.PCB_TRACK(self.board)
-        conn.SetLayer(pcbnew.B_Cu)
-        conn.SetWidth(self.trk_w)
-        conn.SetStart( rm )
-        conn.SetEnd( delta_c[1] )
-        self.board.Add(conn)
-        self.group.AddItem(conn)
-
-        conn = pcbnew.PCB_TRACK(self.board)
-        conn.SetLayer(pcbnew.B_Cu)
-        conn.SetWidth(self.trk_w)
-        conn.SetStart( re )
-        conn.SetEnd( delta_c[2] )
-        self.board.Add(conn)
-        self.group.AddItem(conn)
-
-        return 0
 
      # run the thermal zones task
     def do_thermal(self):
@@ -724,7 +582,17 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.board.Add(c)
    
 
-    # event handlers
+    # file utils
+    def import_json(self, file):
+        # TODO:
+        return 0
+
+    def export_json(self, file):
+        # TODO:
+        return 0
+
+
+    # event handlers (buttons)
     def on_btn_clear(self, event):
         #self.logger.info("Cleared existing coils")
         #logging.shutdown()
@@ -736,6 +604,40 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.generate()
         event.Skip()
 
+    # https://docs.wxpython.org/wx.FileDialog.html
+    def on_btn_load(self, event):
+        #if self.contentNotSaved:
+        #    if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm",
+        #                    wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO:
+        #        return
+        # otherwise ask the user what new file to open
+        with wx.FileDialog(self, "Open XYZ file", wildcard="XYZ files (*.xyz)|*.xyz",
+                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+            # Proceed loading the file chosen by the user
+            pathname = fileDialog.GetPath()
+            try:
+                with open(pathname, 'r') as file:
+                    self.import_json(file)
+            except IOError:
+                wx.LogError("Cannot open file '%s'." % pathname)
+
+    def on_btn_save(self, event):
+        with wx.FileDialog(self, "Save XYZ file", wildcard="XYZ files (*.xyz)|*.xyz",
+                       style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+            # save the current contents in the file
+            pathname = fileDialog.GetPath()
+            try:
+                with open(pathname, 'w') as file:
+                    self.export_json(file)
+            except IOError:
+                wx.LogError("Cannot save current data in file '%s'." % pathname)
+
+
+    # event handlers (parameters)
     def on_nr_layers(self, event):
         self.nl = int(self.m_ctrlLayers.GetValue())
         event.Skip()
