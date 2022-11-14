@@ -1,3 +1,5 @@
+# Copyright 2022 Stefano Cottafavi <stefano.cottafavi@gmail.com>.
+# SPDX-License-Identifier: GPL-2.0-only
 
 def M(arr,i,j):
         # minor of a matrix (ith row, jth column removed)

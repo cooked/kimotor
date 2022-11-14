@@ -1,3 +1,6 @@
+# Copyright 2022 Stefano Cottafavi <stefano.cottafavi@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
 import wx
 import pcbnew
 import os
