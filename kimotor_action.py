@@ -20,7 +20,7 @@ class KiMotor(pcbnew.ActionPlugin):
         self.category = "Modify Drawing PCB"
         self.description = "KiMotor - Parametric PCB stator design"
         self.show_toolbar_button = True # Optional, defaults to False
-        self.icon_file_name = os.path.join(os.path.dirname(__file__), 'flexibility.png') # Optional, defaults to ""
+        self.icon_file_name = os.path.join(os.path.dirname(__file__), 'resources/icons/wheel_24x24.png') # Optional, defaults to ""
     def Run( self ):
         # grab editor frame and board
         self.frame = wx.FindWindowByName("PcbFrame")
