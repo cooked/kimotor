@@ -26,6 +26,7 @@ class KiMotor(pcbnew.ActionPlugin):
         self.frame = wx.FindWindowByName("PcbFrame")
         self.board = pcbnew.GetBoard()
         dlg = KiMotorDialog(self.frame, self.board)
+        dlg.SetIcon( wx.Icon(self.icon_file_name) )
         dlg.Show()
 
 class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
