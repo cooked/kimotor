@@ -19,8 +19,8 @@ class KiMotor(pcbnew.ActionPlugin):
         self.name = "KiMotor"
         self.category = "Modify Drawing PCB"
         self.description = "KiMotor - Parametric PCB stator design"
-        self.show_toolbar_button = True # Optional, defaults to False
-        self.icon_file_name = os.path.join(os.path.dirname(__file__), 'resources/icons/wheel_24x24.png') # Optional, defaults to ""
+        self.show_toolbar_button = True
+        self.icon_file_name = os.path.join(os.path.dirname(__file__), 'resources/icons/wheel_24x24.png')
     def Run( self ):
         # grab editor frame and board
         self.frame = wx.FindWindowByName("PcbFrame")
@@ -47,9 +47,15 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
     def generate(self):
 
+        # TODO: improve board management
         self.group = pcbnew.PCB_GROUP( self.board )
         self.board.Add(self.group)
 
+
+        # refresh parameters
+        self.init_parameters()
+
+        # adjust old and calculate new parameters
         ro = self.ro - self.w_mnt - self.w_trm
 
         # generate coils
@@ -60,15 +66,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.do_junctions( coil_t, ext_t, int_t)
         self.do_terminals_motor( ext_t )
 
-        #self.do_coils_terminals(coil_t, self.dr, 3*self.dr)
-        
-        # place mounting holes
+        # create mounting holes
         self.do_mounts()
         
-        # design the board edges
+        # draw board outlines
         self.do_outline( self.ro, self.rb )
         
-        # thermal zones
+        # apply thermal zones
         self.do_thermal()
         
         # draw silks
@@ -388,8 +392,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # coil: contains start and end points of each coil
         # trm: contains terminals' races end points
         # int: internal races (3 coil-coil + 1 start connections)..all have start,mid,end points
-
-        wx.LogWarning(f'{ext_t}')
 
         # junction: motor terminal bus bars (races) to coils terminals
         for i, et in enumerate(ext_t):
