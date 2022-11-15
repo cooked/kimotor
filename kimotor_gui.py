@@ -17,7 +17,7 @@ import wx.xrc
 class KiMotorGUI ( wx.Frame ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"KiMotor", pos = wx.DefaultPosition, size = wx.Size( 450,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.STAY_ON_TOP|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"KiMotor", pos = wx.DefaultPosition, size = wx.Size( 450,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.STAY_ON_TOP|wx.TAB_TRAVERSAL, name = u"kimotor" )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 		self.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_3DLIGHT ) )
@@ -149,7 +149,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer22111.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlRfill = wx.SpinCtrlDouble( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0.1, 100, 0.5, 0.1 )
+		self.m_ctrlRfill = wx.SpinCtrlDouble( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0.1, 100, 0.200000, 0.1 )
 		self.m_ctrlRfill.SetDigits( 2 )
 		self.m_ctrlRfill.SetToolTip( u"Radius used to smooth the coil corners" )
 
@@ -210,9 +210,8 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer21.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlLoops = wx.SpinCtrl( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 140,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 1, 999, 12 )
-		self.m_ctrlLoops.SetToolTip( u"Number of coil loops on each layer of the PCB stack" )
-
+		self.m_ctrlLoops = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 140,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 1, 999, 10, 1 )
+		self.m_ctrlLoops.SetDigits( 0 )
 		bSizer21.Add( self.m_ctrlLoops, 0, wx.ALL, 5 )
 
 
@@ -230,7 +229,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer211.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlTrackWidth = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 140,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0.3, 10, 0.3, 0.1 )
+		self.m_ctrlTrackWidth = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 140,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0.3, 10, 0.5, 0.1 )
 		self.m_ctrlTrackWidth.SetDigits( 2 )
 		bSizer211.Add( self.m_ctrlTrackWidth, 0, wx.ALL, 5 )
 
@@ -255,7 +254,8 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer213.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_mhOut = wx.SpinCtrl( sbSizer11.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 140,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 36, 3 )
+		self.m_mhOut = wx.SpinCtrlDouble( sbSizer11.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 140,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 36, 6, 1 )
+		self.m_mhOut.SetDigits( 0 )
 		bSizer213.Add( self.m_mhOut, 0, wx.ALL, 5 )
 
 
@@ -290,7 +290,8 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer2111.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_mhIn = wx.SpinCtrl( sbSizer11.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 140,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 36, 0 )
+		self.m_mhIn = wx.SpinCtrlDouble( sbSizer11.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 140,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 36, 0, 1 )
+		self.m_mhIn.SetDigits( 0 )
 		bSizer2111.Add( self.m_mhIn, 0, wx.ALL, 5 )
 
 
@@ -352,6 +353,7 @@ class KiMotorGUI ( wx.Frame ):
 		self.Centre( wx.BOTH )
 
 		# Connect Events
+		self.Bind( wx.EVT_CLOSE, self.on_close )
 		self.m_ctrlLayers.Bind( wx.EVT_SPINCTRLDOUBLE, self.on_nr_layers )
 		self.btn_load.Bind( wx.EVT_BUTTON, self.on_btn_load )
 		self.btn_save.Bind( wx.EVT_BUTTON, self.on_btn_save )
@@ -363,6 +365,9 @@ class KiMotorGUI ( wx.Frame ):
 
 
 	# Virtual event handlers, override them in your derived class
+	def on_close( self, event ):
+		event.Skip()
+
 	def on_nr_layers( self, event ):
 		event.Skip()
 

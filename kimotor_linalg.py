@@ -39,6 +39,22 @@ def line(l):
 
     return m, k
 
+def circle_to_polygon(r,n=100):
+    # r: radius
+    # n: nr of output segments
+
+    p = []
+    dth = 2 * math.pi / n
+
+
+    for i in range(n):
+        x = int( r * math.cos(i*dth) )
+        y = int( r * math.sin(i*dth) )         
+        p.append( pcbnew.wxPoint( x,y ) )
+
+    return p
+
+
 def line_points(t):
     # get track start/end points
     ts = t.GetStart()
@@ -87,6 +103,7 @@ def circle_line_tg(l, c,r):
     p = c + np.dot(s*r,vln)
 
     return p
+
 
 def circle_line_sec(l, c,r):
     # https://mathworld.wolfram.com/Circle-LineIntersection.html
@@ -337,59 +354,7 @@ def line_arc_center(t1, t2, f):
 
     return c
 
-def line_arc_center_old(t1, t2, f):
-    # Find fillet center, which is the intersection of the line track shifted by "fillet" 
-    # and the arc line with reduced radius "r - fillet"
-
-    # returns: 1) the center, 2) the trim point on arc
-
-    # t1: track 1 (linear)
-    # t2: track 2 (arc)
-    # f: fillet radius (int)
-
-    # TODO: must offset line in the perp direction 
-    m, k = line(t1)
-    a, b = angle_and_bisect(t1,t2)
-    if a > 0:
-        k += f
-    else:
-        k -= f
-
-    o = t2.GetCenter()
-    r = t2.GetRadius()
-
-    a = 1 + m**2
-    b = 2 * (m*k - o.x)
-    c = (k-o.y)**2 - 2*m*o.y + o.x**2 - (r-f)**2
-
-    x1 = (-b + math.sqrt( b**2 - 4*a*c )) / (2*a)
-    x2 = (-b - math.sqrt( b**2 - 4*a*c )) / (2*a)
-
-    fc1 = [ x1, m*x1 + k ]
-    fc2 = [ x2, m*x2 + k ]
-
-    # TODO: algo to pick the right point p
-    p = fc1
-    # circle1: center = p, radius = f
-    # circle2: center = c, radius = r
-
-    # find the intersection of the track circle and fillet circle
-        # cm = -(c.x - p[0]) / (c.y - p[1])
-        # ck = -((r**2 - f**2) - (c.x**2 - p[0]**2) - (c.y**2 - p[1]**2)) / (2*(p[1]-c.y))
-        
-        # a = 1 + cm
-        # b = 2*(cm*ck-c.x)
-        # c = (ck - c.y)**2 - 2*cm*c.y + c.x**2 + r**2 
-
-        # x1 = (-b + math.sqrt( b**2 - 4*a*c )) / (2*a)
-        # x2 = (-b - math.sqrt( b**2 - 4*a*c )) / (2*a)
-
-    fe1, fe2 = circle_circle_intersect(o.x,o.y,r, p[0],p[1],f)
-    
-    wx.LogWarning(f'circle intercepts: {fe1}, {fe2}')
-
-    return p, fe1
-
+# TODO: implement
 def arc_arc_center(t1, t2, f):
     return
 
@@ -422,6 +387,7 @@ def tangent(t, end = False):
 
     return np.cross([0,0,s], rv)
 
+# TODO: remove? TBC
 def angle_and_bisect(t1, t2):
     # find angle and bisect vector between tracks, using tangent if track is arc
     # (assumes track1_end == track2_start)
@@ -458,6 +424,7 @@ def angle_and_bisect(t1, t2):
 
     return a, b
 
+# TODO: remove? TBC
 def angle2(t1, t2):
     # t1: first track
     # t2: next track
