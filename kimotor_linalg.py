@@ -165,11 +165,49 @@ def circle_arc_mid(p1,p2, c,r):
     return c + np.dot(r,v)
 
 
+
+def line_line_intersect(l1,l2):
+    """ Find the intersection of two lines
+
+    Args:
+        l1 (_type_): 2D array of the 1st line start and end points
+        l2 (_type_): 2D array of the 2nd line start and end points
+
+    Returns:
+        _type_: coordinates of the point of intersect
+    """
+    # https://mathworld.wolfram.com/Line-LineIntersection.html
+
+    p1 = l1[0]
+    p2 = l1[1]
+    p3 = l2[0]
+    p4 = l2[1]
+
+    a12 = np.linalg.det(np.array([[p1[0], p1[1]], [p2[0], p2[1]]]))
+    a34 = np.linalg.det(np.array([[p3[0], p3[1]], [p4[0], p4[1]]]))
+    x12 = p1[0] - p2[0]
+    x34 = p3[0] - p4[0]
+    y12 = p1[1] - p2[1]
+    y34 = p3[1] - p4[1]
+    
+    nx = np.linalg.det(np.array( [[a12, x12], [a34, x34]] ))
+    ny = np.linalg.det(np.array( [[a12, y12], [a34, y34]] ))
+    d = np.linalg.det(np.array( [[x12, y12], [x34, y34]] ))
+
+    return np.array([nx/d, ny/d, 0])
+
 def circle_line_intersect(l, c,r, ref=1):
-    # l: 2D array of the line points
-    # c: circle center
-    # r: circle radius
-    # ref: linepoint to use as reference (0=start, 1=end)
+    """ Find the intersection of a line and a circle
+
+    Args:
+        l (_type_): 2D array of the line start and end points
+        c (_type_): coordinates [x,y] of the circle center 
+        r (_type_): radius of the circle
+        ref (int, optional): line point to use as reference (0=start, 1=end). Defaults to 1.
+
+    Returns:
+        _type_: coordinates of the point of intersect
+    """
 
     # TODO: this fails for dx=0 (m=inf)
     m,k = line(l)
@@ -199,65 +237,23 @@ def circle_line_intersect(l, c,r, ref=1):
     # TODO: what if equal? we should add a check beforehand
     return p1 if d1<d2 else p2
 
-
-# line-to-line fillet
-def line_line_intersect(l1,l2):
-    # https://mathworld.wolfram.com/Line-LineIntersection.html
-
-    p1 = l1[0]
-    p2 = l1[1]
-    p3 = l2[0]
-    p4 = l2[1]
-
-    a12 = np.linalg.det(np.array([[p1[0], p1[1]], [p2[0], p2[1]]]))
-    a34 = np.linalg.det(np.array([[p3[0], p3[1]], [p4[0], p4[1]]]))
-    x12 = p1[0] - p2[0]
-    x34 = p3[0] - p4[0]
-    y12 = p1[1] - p2[1]
-    y34 = p3[1] - p4[1]
-    
-    nx = np.linalg.det(np.array( [[a12, x12], [a34, x34]] ))
-    ny = np.linalg.det(np.array( [[a12, y12], [a34, y34]] ))
-    d = np.linalg.det(np.array( [[x12, y12], [x34, y34]] ))
-
-    return np.array([nx/d, ny/d, 0])
-def line_line_center(t1,t2, f):
-    # find fillet center, given two straight lines 
-    # (i.e intersection of the 2 lines offset by f)
-
-    # solve unit vectors
-    v1 = vec(t1)
-    v2 = vec(t2)
-    v1u = v1/np.linalg.norm(v1) 
-    v2u = v2/np.linalg.norm(v2) 
-    z = np.array([0,0,1])
-
-    # side, cw or ccw
-    d = np.dot(v1u,v2u)
-    c = np.cross(v1u,v2u)
-    s = np.sign( np.dot(z,c) )
-
-    v1n = np.cross( z, v1u ) 
-    v2n = np.cross( z, v2u ) 
-
-    # offset lines
-    p1 = line_points(t1)
-    p2 = line_points(t2)
-    p1 = p1 + np.dot(s*f, v1n)
-    p2 = p2 + np.dot(s*f, v2n)
-
-    # line intersection (i.e. fillet center)
-    c = line_line_intersect(p1,p2)
-
-    return c
-
-# line-to-arc fillet
-
-
 def circle_circle_intersect(c1,r1,c2,r2):
+    """ Find the intersection of two circles
+
+    Args:
+        c1 (_type_): coordinates [x,y] of the 1st circle center
+        r1 (_type_): radius of the 1st circle
+        c2 (_type_): coordinates [x,y] of the 2nd circle center
+        r2 (_type_): radius of the 2nd circle
+
+    Returns:
+        _type_: _description_
+    """
+
     # https://math.stackexchange.com/questions/256100/how-can-i-find-the-points-at-which-two-circles-intersect
     # https://gist.github.com/jupdike/bfe5eb23d1c395d8a0a1a4ddd94882ac
     # https://gist.github.com/jupdike/bfe5eb23d1c395d8a0a1a4ddd94882ac?permalink_comment_id=3590178#gistcomment-3590178
+    
     x1 = c1[0]
     y1 = c1[1]
     x2 = c2[0]
@@ -290,11 +286,61 @@ def circle_circle_intersect(c1,r1,c2,r2):
     iy1 = fy + gy;
     iy2 = fy - gy;
 
-    
     return [ix1, iy1], [ix2, iy2];
 
 
-def line_arc_center(t1, t2, f):
+
+def line_line_center(t1,t2, f):
+    """ Center of the arc fillet, given two straight tracks. The point is the intersection 
+    of the track lines both offset by the fillet radius
+
+    Args:
+        t1 (_type_): track 1
+        t2 (_type_): track 2
+        f (_type_): fillet radius
+
+    Returns:
+        _type_: _description_
+    """
+    
+    # solve unit vectors
+    v1 = vec(t1)
+    v2 = vec(t2)
+    v1u = v1/np.linalg.norm(v1) 
+    v2u = v2/np.linalg.norm(v2) 
+    z = np.array([0,0,1])
+
+    # side, cw or ccw
+    d = np.dot(v1u,v2u)
+    c = np.cross(v1u,v2u)
+    s = np.sign( np.dot(z,c) )
+
+    v1n = np.cross( z, v1u ) 
+    v2n = np.cross( z, v2u ) 
+
+    # offset lines
+    p1 = line_points(t1)
+    p2 = line_points(t2)
+    p1 = p1 + np.dot(s*f, v1n)
+    p2 = p2 + np.dot(s*f, v2n)
+
+    # line intersection (i.e. fillet center)
+    c = line_line_intersect(p1,p2)
+
+    return c
+
+def line_arc_center(t1, t2, f, side=1):
+    """ Center of the arc fillet, given one straight and one arc track. The point is the intersection 
+    of the track lines offset by the fillet radius
+
+    Args:
+        t1 (_type_): track 1
+        t2 (_type_): track 2
+        f (_type_): fillet radius
+
+    Returns:
+        _type_: _description_
+    """
 
     t1_arc = t1.GetClass() == 'PCB_ARC'
     t2_arc = t2.GetClass() == 'PCB_ARC'
@@ -317,14 +363,13 @@ def line_arc_center(t1, t2, f):
         # offset circle
         o = t1.GetCenter()
         o = np.array([o.x, o.y])
-        r = t1.GetRadius() - f
+        r = t1.GetRadius() - side*f
 
         # offset line
         p2 = line_points(t2)
         p2 = p2 + np.dot( f, v2n )
 
         c = circle_line_intersect(p2, o, r, 0)
-
 
     elif t2_arc:
         # solve unit vectors
@@ -348,7 +393,7 @@ def line_arc_center(t1, t2, f):
         # offset circle
         o = t2.GetCenter()
         o = np.array([o.x, o.y])
-        r = t2.GetRadius() - f
+        r = t2.GetRadius() - side*f
 
         c = circle_line_intersect(p1, o, r, 1)
 
@@ -357,6 +402,7 @@ def line_arc_center(t1, t2, f):
 # TODO: implement
 def arc_arc_center(t1, t2, f):
     return
+
 
 def normalize(t):
     # returns (unit vector) direction of the track
@@ -423,7 +469,6 @@ def angle_and_bisect(t1, t2):
     b = b / np.linalg.norm(b)
 
     return a, b
-
 # TODO: remove? TBC
 def angle2(t1, t2):
     # t1: first track

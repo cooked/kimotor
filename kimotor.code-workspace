@@ -3,5 +3,10 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"extensions": {
+		"recommendations": [
+			"njpwerner.autodocstring"
+		]
+	}
 }
