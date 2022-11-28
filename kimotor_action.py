@@ -38,7 +38,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     
     group = None
 
-    SCALE = 1e6
+    SCALE = pcbnew.IU_PER_MM
 
     def __init__(self,  parent, board):
         kimotor_gui.KiMotorGUI.__init__(self, parent)
@@ -51,24 +51,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.init_config()
         self.init_nets()
 
-    # test
-    def generate2(self): 
-
-        self.group = pcbnew.PCB_GROUP( self.board )
-        self.board.Add(self.group)
-        # refresh parameters
-        self.init_parameters()
-        self.rm = self.ro - self.w_mnt
-        self.roc = self.rm - self.w_trm
-        # generate and connect coils
-        coil_t = self.do_coils(self.nl, self.ri, self.roc)
-
-        # draw silks
-        self.do_silk( self.roc+self.trk_w, self.ri )
-
-        # update board
-        pcbnew.Refresh()
-
     def generate(self):
 
         # TODO: improve board management
@@ -79,17 +61,20 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # refresh parameters
         self.init_parameters()
 
-        # TODO: provide better naming
         # rm: inner radial position of the mounting holes
-        # roc: outer coil radius 
+        # roc: outer coil radius
+        # rot: radial position of motor terminals
         self.rm = self.ro - self.w_mnt
         self.roc = self.rm - self.w_trm
+        self.rot = (self.roc + (self.ro-self.w_mnt)) / 2
 
         # generate and connect coils
         coil_t = self.do_coils(self.nl, self.ri, self.roc)
-        ext_t, int_t = self.do_races(self.dr, self.roc, self.ri)
+
+        drc = max(self.dr, self.d_via)
+        ext_t, int_t = self.do_races(drc, self.roc, self.ri)
         self.do_junctions( coil_t, ext_t, int_t)
-        self.do_terminals_motor( ext_t )
+        self.do_terminals_motor( self.rot, ext_t )
 
         # create mounting holes
         self.do_mounts()
@@ -98,6 +83,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.do_outline( self.ro, self.rb )
         
         # apply thermal zones
+        self.via_rows = 2
         self.do_thermal()
         
         # draw silks
@@ -145,6 +131,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.mhin = int(self.m_mhIn.GetValue())
         self.mhir = int(self.m_mhInR.GetValue() /2 * self.SCALE)
 
+        self.d_via = int(0.4 * self.SCALE)   # min via size
         self.d_drill = int(0.2 * self.SCALE)   # min drill size
 
         # init buttons state
@@ -407,7 +394,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         int_t = []
 
         # add some space fro mthe coil inner side
-        ri -= 2*self.trk_w
+        ri -= dr
 
         pp = int(self.poles/2)
 
@@ -523,7 +510,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             via = pcbnew.PCB_VIA(self.board)
             via.SetPosition( j.GetEnd() )
             via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
+            via.SetWidth( self.d_via )
             self.board.Add(via)
             self.group.AddItem(via)
             # jumper 2 (last layer)
@@ -546,38 +533,54 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             via = pcbnew.PCB_VIA(self.board)
             via.SetPosition( j.GetEnd() )
             via.SetDrill( self.d_drill )
-            via.SetWidth( self.trk_w )
+            via.SetWidth( self.d_via )
             self.board.Add(via)
             self.group.AddItem(via)
 
-        return 0
+    def do_terminals_motor(self, r, ext_t):
+        """ Create motor terminal contacts and connect them to the coil terminations
 
-    def do_terminals_motor(self, ext_t):
-        
+        Args:
+            r (int): radial position of the terminals
+            ext_t (list): coils' termination tracks
+
+        """
+
         fp_lib = self.fp_path + '/Connector_Pin.pretty'
         fp = "Pin_D1.0mm_L10.0mm"
 
         rot = math.radians(360/self.poles) / 2
 
-        for t in ext_t:
-            # (inner) concentric arc races
-            # start, end, and mid angle
+        ph_shift = math.pi/2
+        ph_space = math.radians(5)
+
+        #for t in ext_t:
+        for idx, i in enumerate([-1,0,1]):
+
+            th = ph_shift + i * ph_space 
+            rs = pcbnew.wxPoint( r*math.cos(th), r*math.sin(th) )
+
             m = pcbnew.FootprintLoad( fp_lib, fp )
             m.SetReference('')
-            m.SetPosition( t[0] )
-            m.Rotate( t[0], rot )
+            m.SetPosition( rs )
+            m.Rotate( rs, rot )
             self.board.Add(m)
+            self.group.AddItem(m)
 
-        return 0
-
+            # link it 
+            conn = pcbnew.PCB_TRACK(self.board)
+            conn.SetLayer(pcbnew.F_Cu)
+            conn.SetWidth(self.trk_w)
+            conn.SetStart( rs )
+            conn.SetEnd( ext_t[idx][0] ) 
+            self.board.Add(conn)
+            self.group.AddItem(conn)
 
      # run the thermal zones task
-    def do_thermal(self):
+    def do_thermal(self, nvias=36):
         # see refill: 
         # https://forum.kicad.info/t/python-scripting-refill-all-zones/35834
         # TODO: add cooling fingers (TBD)
-
-        fs = 1.05*self.ro
 
         # no solder mask inner zone
         rnsi = self.ri - 12*self.trk_w
@@ -595,8 +598,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         filler = pcbnew.ZONE_FILLER(self.board)
         
         # outer annular
+        roz = 1.01*self.ro # r of the outer zone (1% larger than board outline)
         z = pcbnew.ZONE(self.board)
-        cp = kla.circle_to_polygon( self.ro*1.02, 100 )
+        cp = kla.circle_to_polygon( roz, 100 )
         z.AddPolygon( pcbnew.wxPoint_Vector(cp) )
         cp = kla.circle_to_polygon( self.roc + 2*self.trk_w, 100 )
         z.AddPolygon( pcbnew.wxPoint_Vector(cp) )
@@ -618,16 +622,16 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         
         # stitching
-        vn = 36 #self.mhon
-        dth = 2*math.pi / 36
+        drv = (self.ro - self.rm) / (self.via_rows+1)
+        dth = 2*math.pi / nvias
         dths = dth/2
-        for j in [1,2]:
-            vr = self.mhor - 1.5*j*self.dr
-            for i in range(vn):
+        for j in range(self.via_rows):
+            vr = self.mhor - (j+1)*drv
+            for i in range(nvias):
                 via = pcbnew.PCB_VIA(self.board)
                 via.SetPosition( pcbnew.wxPoint( vr*math.cos(dths+i*dth), vr*math.sin(dths+i*dth) ) )
-                via.SetDrill( 2*self.d_drill )
-                via.SetWidth( 2*self.trk_w )
+                via.SetDrill( self.d_drill )
+                via.SetWidth( self.d_via )
                 via.SetNet(ni_gnd)
                 self.board.Add(via)
 
@@ -651,7 +655,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         z.SetLayerSet(nls)
         z.SetIslandRemovalMode( pcbnew.ISLAND_REMOVAL_MODE_NEVER )
         self.board.Add(z)
-
 
 
         filler.Fill(self.board.Zones())
