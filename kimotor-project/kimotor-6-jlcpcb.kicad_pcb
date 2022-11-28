@@ -101,4 +101,9 @@
 
   (net 0 "")
 
+  (group "" (id 707a3dc3-7aa7-4b3e-a39f-f1f496663cd4)
+    (members
+      5eaf542d-c4bd-426f-8d19-c796fb506359
+    )
+  )
 )
