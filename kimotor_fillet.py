@@ -18,7 +18,7 @@ def test_via(board, pos):
     via.SetWidth( int(0.2*1e6) )
     board.Add(via)
 
-def fillet(board, t1, t2, r, side=1):
+def fillet(board, group, t1, t2, r, side=1):
     """ Generate fillet between two tracks
 
     Args:
@@ -86,6 +86,7 @@ def fillet(board, t1, t2, r, side=1):
     t.SetMid( pcbnew.wxPoint(int(m[0]),int(m[1])) )
     t.SetEnd( pcbnew.wxPoint(int(p2[0]),int(p2[1])) )
     board.Add(t)
+    group.AddItem(t)
     # trim tracks
     t1.SetEnd( pcbnew.wxPoint(p1[0],p1[1])  )
     t2.SetStart( pcbnew.wxPoint(p2[0],p2[1])  )

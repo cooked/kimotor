@@ -148,14 +148,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.layset.append(pcbnew.In4_Cu)
         self.layset.append(pcbnew.B_Cu) 
 
-    def coil_solver(self, r1,r2, dr0, dr,th,turns,dir):
+    def coil_solver(self, r1,r2, dr,th,turns,dir):
         """ Compute coil layout points 
 
         Args:
             r1 (int): coil inner radius
             r2 (int): coil outer radius
-            dr0 (int): spacing between adjacent coils
-            dr (int): spacing between coil loops
+            dr (int): spacing between coil loops (and also adj. coils)
             th (float): coil trapezoid angle 
             turns (int): number of coil loops (windings)
             dir (int): coil direction, from larger to smaller loop (0:CW normal, 1:CCW rverse)
@@ -171,7 +170,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # points 
         c = [0,0,0]
         l0 = np.array([ c, [r1*math.cos(th/2), r1*math.sin(th/2), 0] ])
-        l0 = kla.line_offset(l0, -dr0)
+        l0 = kla.line_offset(l0, -dr)
 
         for l in range(turns):
             # TODO: instead of offsetting (parallel to previous) we might want move to adj. radial
@@ -201,7 +200,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         return pm, mm, mmi
 
-    def coil_tracker(self, Tf, Tfv, Tfvi, layer):
+    def coil_tracker(self, Tf, Tfv, Tfvi, layer, group):
         """ Convert the points (corners and arcs mids) describing a coil layout into PCB tracks
 
         Args:
@@ -264,12 +263,11 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             t.SetStart( ps )
             t.SetEnd( pe )
             self.board.Add(t)
-            self.group.AddItem(t)
+            group.AddItem(t)
             
             # fillet
             if idx > start_index and self.r_fill > 0:
-
-                kf.fillet(self.board, track0f, t, self.r_fill, side)
+                kf.fillet(self.board, group, track0f, t, self.r_fill, side)
 
             track0f = t    
             startf = tf
@@ -285,8 +283,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 break
         
         ce = track0f.GetEnd()
-
-        
 
         return [cs, ce] 
 
@@ -322,7 +318,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             return
 
 
-        dr = self.trk_w * 2
         th0 = math.radians(360/self.poles)
 
         # limit coil base width (assume 1deg gap between coils base)
@@ -331,13 +326,17 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #w2 = 10 * 1e6 #ri * math.cos(th0/2 - dth)
 
         # coil (corners, mid-points)
-        pcu0, pcu0m, pcu0mi = self.coil_solver(int(ri), int(ro), dr, dr, th0, self.loops, 0)
-        pcu1, pcu1m, pcu1mi = self.coil_solver(int(ri), int(ro), dr, dr, th0, self.loops, 1)
+        pcu0, pcu0m, pcu0mi = self.coil_solver(int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0)
+        pcu1, pcu1m, pcu1mi = self.coil_solver(int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1)
 
         # coil terminals
         coil_t = []
         # poles
         for p in range(self.poles):
+            
+            pgroup = pcbnew.PCB_GROUP( self.board )
+            pgroup.SetName("pole_"+str(p))
+            self.board.Add(pgroup)
 
             # coil [start,end] points
             coil_se = []
@@ -351,7 +350,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             T0 = np.matmul(R, pcu0.transpose()).transpose()
             T0v = np.matmul(R, pcu0m.transpose()).transpose()
             T0vi = np.matmul(R, pcu0mi.transpose()).transpose()
-            
             T1 = np.matmul(R, pcu1.transpose()).transpose()
             T1v = np.matmul(R, pcu1m.transpose()).transpose()
             T1vi = np.matmul(R, pcu1mi.transpose()).transpose()
@@ -360,27 +358,34 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 
                 # EVEN layers use CCW
                 if idx%2:
-                    ct = self.coil_tracker(T1, T1v, T1vi, lyr)
+                    ct = self.coil_tracker(T1, T1v, T1vi, lyr, pgroup)
 
                     # join coil layers
                     via = pcbnew.PCB_VIA(self.board)
-                    
-                    if len(laypar) == 2:
+                    if ln==2:
                         via.SetViaType(pcbnew.VIATYPE_THROUGH)
                     else:
                         via.SetViaType(pcbnew.VIATYPE_BLIND_BURIED)
-                    
                     via.SetLayerPair( laypar[idx-1], laypar[idx] )
-
                     via.SetPosition( ct[1] )
                     via.SetDrill( self.d_drill )
                     via.SetWidth( self.trk_w )
                     self.board.Add(via)
-                    self.group.AddItem(via)
+                    pgroup.AddItem(via)
                 
                 # ODD layers use CW
                 else:
-                    ct = self.coil_tracker(T0, T0v, T0vi, lyr)
+                    ct = self.coil_tracker(T0, T0v, T0vi, lyr, pgroup)
+
+                    if ln>2 and idx:
+                        via = pcbnew.PCB_VIA(self.board)
+                        via.SetViaType(pcbnew.VIATYPE_BLIND_BURIED)
+                        via.SetLayerPair( laypar[idx-1], laypar[idx] )
+                        via.SetPosition( ct[0] )
+                        via.SetDrill( self.d_drill )
+                        via.SetWidth( self.trk_w )
+                        self.board.Add(via)
+                        pgroup.AddItem(via)
 
                 coil_se.append(ct[0])
             coil_t.append(coil_se)
