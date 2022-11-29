@@ -171,6 +171,10 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         c = [0,0,0]
         l0 = np.array([ c, [r1*math.cos(th/2), r1*math.sin(th/2), 0] ])
         l0 = kla.line_offset(l0, -dr)
+        
+        # FIXME: ba design. store 1/4 point (mid of half inner arc) as first item in the vertex list 
+        #pmi = np.array([ r1*math.cos(th/4), r1*math.sin(th/4) ])
+        #mdsi.extend([pmi])
 
         for l in range(turns):
             # TODO: instead of offsetting (parallel to previous) we might want move to adj. radial
@@ -220,17 +224,31 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         elif arc_mode == 2:
             skip = 2
 
-        #start_index = 1 if layer==0 else 0
-        start_index = 0
+        start_index = 1 if layer==0 else 0
         startf = Tf[start_index]
-        
+
         # keep track of the outer and inner vertexes (arcs mids)
         iv = 0
         ivi = 0
-        
-        # store 1st coil terminal
-        cs = pcbnew.wxPoint( int(startf[0,0]), int(startf[0,1]) )
-        
+
+        # 1st coil point
+        if layer != 0:
+            #mps = pcbnew.wxPoint( int(Tfvi[ivi][0,0]), int(Tfvi[ivi][0,1]) )
+            #ivi += 1
+            cs = pcbnew.wxPoint( int(Tfvi[ivi][0,0]), int(Tfvi[ivi][0,1]) )
+            ivi += 1
+            t = pcbnew.PCB_TRACK(self.board)    
+            t.SetWidth( self.trk_w )
+            t.SetLayer( layer )
+            t.SetStart( cs )
+            #t.SetMid( mps )
+            t.SetEnd( pcbnew.wxPoint( int(startf[0,0]), int(startf[0,1]) ) )
+            self.board.Add(t)
+            group.AddItem(t)
+        else:
+            cs = pcbnew.wxPoint( int(startf[0,0]), int(startf[0,1]) )
+
+
         for idx, tf in enumerate(Tf[start_index+1:]):
             
             # start point, end point of track segment
@@ -326,8 +344,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #w2 = 10 * 1e6 #ri * math.cos(th0/2 - dth)
 
         # coil (corners, mid-points)
-        pcu0, pcu0m, pcu0mi = self.coil_solver(int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0)
-        pcu1, pcu1m, pcu1mi = self.coil_solver(int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1)
+        pcu0, pcu0m, pcu0mi = self.coil_solver( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
+        pcu1, pcu1m, pcu1mi = self.coil_solver( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
 
         # coil terminals
         coil_t = []
@@ -455,7 +473,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         
         # star-connection race
         cri = ri - pp*dr
-        ths = pp*th0 - th0/2
+        ths = pp*th0 #- th0/2
         the = ths + (pp-1)*th0
         thm = (the+ths)/2
         # start, end, and mid angle
@@ -588,7 +606,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # TODO: add cooling fingers (TBD)
 
         # no solder mask inner zone
-        rnsi = self.ri - 12*self.trk_w
+        rnsi = self.ri - 6*self.d_via
 
         # retrieve gnd net
         ni_gnd = self.board.FindNet("gnd")
@@ -632,6 +650,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         dths = dth/2
         for j in range(self.via_rows):
             vr = self.mhor - (j+1)*drv
+            vri = rnsi - (j+1)*drv
             for i in range(nvias):
                 via = pcbnew.PCB_VIA(self.board)
                 via.SetPosition( pcbnew.wxPoint( vr*math.cos(dths+i*dth), vr*math.sin(dths+i*dth) ) )
@@ -639,6 +658,14 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 via.SetWidth( self.d_via )
                 via.SetNet(ni_gnd)
                 self.board.Add(via)
+
+                if not i%3:
+                    via = pcbnew.PCB_VIA(self.board)
+                    via.SetPosition( pcbnew.wxPoint( vri*math.cos(dths+i*dth), vri*math.sin(dths+i*dth) ) )
+                    via.SetDrill( self.d_drill )
+                    via.SetWidth( self.d_via )
+                    via.SetNet(ni_gnd)
+                    self.board.Add(via)
 
 
         # no solder mask
