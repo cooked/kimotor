@@ -2,8 +2,6 @@
 
 name: Release including SHA-256
 
-# Controls when the action will run. Workflow runs when manually triggered using the UI
-# or API.
 on:
   release:
     types: [published]
