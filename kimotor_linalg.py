@@ -469,6 +469,7 @@ def angle_and_bisect(t1, t2):
     b = b / np.linalg.norm(b)
 
     return a, b
+
 # TODO: remove? TBC
 def angle2(t1, t2):
     # t1: first track
@@ -492,3 +493,4 @@ def angle2(t1, t2):
     t1v = pcbnew.VECTOR2I( t1e.x-t1s.x, t1e.y-t1s.y )
     
     return t2v.Angle() - t1v.Angle()
+    

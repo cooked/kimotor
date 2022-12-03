@@ -11,13 +11,6 @@ if __name__ == '__main__':
 else:
     from . import kimotor_linalg as kla
 
-def test_via(board, pos):
-    via = pcbnew.PCB_VIA(board)
-    via.SetPosition( pcbnew.wxPoint(pos[0],pos[1]) )
-    via.SetDrill( int(0.1*1e6) )
-    via.SetWidth( int(0.2*1e6) )
-    board.Add(via)
-
 def fillet(board, group, t1, t2, r, side=1):
     """ Generate fillet between two tracks
 
@@ -47,6 +40,7 @@ def fillet(board, group, t1, t2, r, side=1):
         # trim point track2
         l2 = kla.line_points(t2)
         p2 = kla.circle_line_tg( l2, c, r)
+
 
     if t1_arc:
         # trim point track1 (arc)
@@ -91,5 +85,102 @@ def fillet(board, group, t1, t2, r, side=1):
     t1.SetEnd( pcbnew.wxPoint(p1[0],p1[1])  )
     t2.SetStart( pcbnew.wxPoint(p2[0],p2[1])  )
 
+## borrowed from fillet_helper.py
+## https://github.com/tywtyw2002/FilletEdge/blob/master/fillet_helper.py
+def fillet_outline(board, a, b, fillet_value):
+        # must be cw rotate, swap if ccw rotate
+        theta = 0
+        a_s = a.GetStart()
+        a_e = a.GetEnd()
+        b_s = b.GetStart()
+        b_e = b.GetEnd()
+        a_reverse = 1
+        b_reverse = 1
+        a_set = a.SetStart
+        b_set = b.SetStart
+        co_point = pcbnew.wxPoint(a_s.x, a_s.y)
 
-    
+        if a_e == b_s or a_e == b_e:
+            co_point = pcbnew.wxPoint(a_e.x, a_e.y)
+            a_set = a.SetEnd
+            a_reverse = -1
+        elif a_s != b_s and a_s != b_e:
+            wx.LogWarning('Unable to Fillet, 2 lines not share any point.')
+            return
+
+        if b_e == co_point:
+            b_reverse = -1
+            b_set = b.SetEnd
+
+        a_v = pcbnew.VECTOR2I(
+            (a.GetEndX() - a.GetStartX()) * a_reverse,
+            -(a.GetEndY() - a.GetStartY()) * a_reverse
+        )
+        b_v = pcbnew.VECTOR2I(
+            (b.GetEndX() - b.GetStartX()) * b_reverse,
+            -(b.GetEndY() - b.GetStartY()) * b_reverse
+        )
+
+        theta = a_v.Angle() - b_v.Angle()
+
+        if theta < -math.pi:
+            theta += math.pi * 2
+        elif theta > math.pi:
+            theta -= math.pi * 2
+
+        deg = math.degrees(theta)
+
+        offset = fillet_value
+        if int(deg) != 90 and int(deg) != -90:
+            offset = abs(offset * math.tan((math.pi - theta) / 2))
+
+        a_point = pcbnew.wxPoint(
+            int(co_point.x + offset * math.cos(a_v.Angle())),
+            int(co_point.y - offset * math.sin(a_v.Angle()))
+        )
+        b_point = pcbnew.wxPoint(
+            int(co_point.x + offset * math.cos(b_v.Angle())),
+            int(co_point.y - offset * math.sin(b_v.Angle()))
+        )
+
+        a_set(a_point)
+        b_set(b_point)
+
+        # check length
+        if a.GetLength() == 0:
+            board.Remove(a)
+
+        if b.GetLength() == 0:
+            board.Remove(b)
+
+        # set arc
+        s_arc = pcbnew.PCB_SHAPE()
+        s_arc.SetShape(pcbnew.SHAPE_T_ARC)
+
+        c_v = a_v.Resize(1000000) + b_v.Resize(1000000)
+        c_angle = c_v.Angle()
+        
+        if offset == fillet_value:
+            # 90 or -90
+            s_arc.SetCenter(pcbnew.wxPoint(
+                a_point.x + b_point.x - co_point.x,
+                a_point.y + b_point.y - co_point.y
+            ))
+        else:
+            coffset = abs(fillet_value / math.cos((math.pi - theta) / 2))
+            s_arc.SetCenter(pcbnew.wxPoint(
+                co_point.x + int(coffset * math.cos(c_angle)),
+                co_point.y - int(coffset * math.sin(c_angle))
+            ))
+
+        if deg < 0:
+            s_arc.SetStart(a_point)
+        else:
+            s_arc.SetStart(b_point)
+
+        s_arc.SetArcAngleAndEnd(1800 - abs(deg * 10))
+
+        s_arc.SetLayer(a.GetLayer())
+        s_arc.SetWidth(a.GetWidth())
+
+        board.Add(s_arc)
