@@ -194,7 +194,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer22112 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.lbl_refresh_time2112 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Fillet radius:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.lbl_refresh_time2112 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Outline fillet radius:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.lbl_refresh_time2112.Wrap( -1 )
 
 		bSizer22112.Add( self.lbl_refresh_time2112, 0, wx.ALL, 5 )
@@ -325,7 +325,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer22111 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.lbl_refresh_time2111 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Track fillet:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.lbl_refresh_time2111 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Track fillet radius:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.lbl_refresh_time2111.Wrap( -1 )
 
 		bSizer22111.Add( self.lbl_refresh_time2111, 0, wx.ALL, 5 )
