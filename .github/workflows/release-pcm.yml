@@ -1,0 +1,32 @@
+# Release and calculate SHA-256
+
+name: Release a PCM-compatible archive
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pack:
+    name: Create PCM archive
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v3
+      
+      - name: Prepare folders
+        run: |
+        mkdir plugins
+        mv *.py *.png plugins
+      
+      - uses: thedoctor0/zip-release@main
+        with:
+          type: 'zip'
+          filename: 'kimotor-pcm.zip'
+          exclusions: '*.git* *.code-workspace *.md *.fbp *.txt __pycache__'
+
+      - uses: ncipollo/release-action@v1
+        with:
+          tag: v0.1.0
+          artifacts: "kimotor-pcm.zip"
