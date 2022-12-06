@@ -20,13 +20,7 @@ jobs:
           mkdir plugins resources
           mv *.py *.png plugins
           mv assets/icon.png assets/kimotor-project resources
-      
-      - uses: thedoctor0/zip-release@main
-        with:
-          type: 'zip'
-          filename: 'kimotor-pcm.zip'
-          exclusions: '*.git* *.code-workspace *.md *.fbp *.txt __pycache__'
-          recursive_exclusions: 'assets'
+          zip kimotor-pcm.zip plugins resources metadata.json
 
       - uses: ncipollo/release-action@v1
         with:
