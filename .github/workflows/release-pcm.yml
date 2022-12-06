@@ -4,9 +4,6 @@ name: Release a PCM-compatible archive
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-    - '*'
 
 jobs:
   pack:
