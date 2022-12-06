@@ -25,7 +25,8 @@ jobs:
         with:
           type: 'zip'
           filename: 'kimotor-pcm.zip'
-          exclusions: 'assets/ *.git* *.code-workspace *.md *.fbp *.txt __pycache__'
+          exclusions: '*.git* *.code-workspace *.md *.fbp *.txt __pycache__'
+          recursive-exclusions: 'assets/*.*'
 
       - uses: ncipollo/release-action@v1
         with:
