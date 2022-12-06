@@ -4,6 +4,9 @@ name: Release a PCM-compatible archive
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+    - '*'
 
 jobs:
   pack:
@@ -28,5 +31,4 @@ jobs:
 
       - uses: ncipollo/release-action@v1
         with:
-          tag: v0.1.0
           artifacts: "kimotor-pcm.zip"
