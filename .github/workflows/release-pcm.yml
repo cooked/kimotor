@@ -17,8 +17,8 @@ jobs:
       
       - name: Prepare folders
         run: |
-        mkdir plugins
-        mv *.py *.png plugins
+          mkdir plugins
+          mv *.py *.png plugins
       
       - uses: thedoctor0/zip-release@main
         with:
