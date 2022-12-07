@@ -23,7 +23,7 @@ jobs:
 
       - name: Stats
         run: |
-          echo "FILE_SHA = $(shasum -a 256 kimotor-pcm.zip)"" >> $GITHUB_ENV
+          echo "FILE_SHA = $(shasum -a 256 kimotor-pcm.zip)" >> $GITHUB_ENV
           echo "FILE_SIZE = $(wc -c < kimotor-pcm.zip)" >> $GITHUB_ENV
           echo "FILE_SIZE_UC = $(unzip -l kimotor-pcm.zip | tail -1 | xargs | cut -d ' ' -f1)" >> $GITHUB_ENV
 
