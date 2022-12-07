@@ -24,8 +24,10 @@ jobs:
 
       - name: Get statistics
         run: |
-          wget https://gitlab.com/kicad/addons/metadata/-/blob/main/tools/app/util.py
-          python -c 'from util import get_package_stats; print( get_package_stats("kimotor-pcm.zip") )'
+          shasum -a 256 kimotor-pcm.zip
+          wc -c < kimotor-pcm.zip
+          unzip -l kimotor-pcm.zip | tail -1 | xargs | cut -d ' ' -f1
+
 
   #    - uses: ncipollo/release-action@v1
   #      with:
