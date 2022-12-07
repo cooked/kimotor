@@ -14,21 +14,31 @@ jobs:
       - name: Checkout this repository
         uses: actions/checkout@v3
       
-      - name: Prepare folders
+      - name: Prepare plugin folders
         run: |
           mkdir plugins resources
           mv *.py *.png kimotor-project plugins
           mv assets/icon.png resources
           zip -r kimotor-pcm.zip plugins resources metadata.json
 
-      - name: Get statistics
+      - name: Get plugin statistics
         run: |
-          shasum -a 256 kimotor-pcm.zip
-          wc -c < kimotor-pcm.zip
-          unzip -l kimotor-pcm.zip | tail -1 | xargs | cut -d ' ' -f1
+          FILE_SHA = $(shasum -a 256 kimotor-pcm.zip)
+          FILE_SIZE = $(wc -c < kimotor-pcm.zip)
+          FILE_SIZE_UC = $(unzip -l kimotor-pcm.zip | tail -1 | xargs | cut -d ' ' -f1)
 
+      - name: Add statistics to metadata
+        run: |
+          sudo apt-get install jq
+          jq '.versions[0] += {"download_sha256": "${FILE_SHA}", "download_size": "${FILE_SIZE}", "install_size": "${FILE_SIZE_UC}" }' metadata.json
 
-      - uses: ncipollo/release-action@v1
+      - name: Release the plugin archive
+        uses: ncipollo/release-action@v1
         with:
           tag: "v0.1.0"
-          artifacts: "kimotor-pcm.zip"
+          artifacts: "kimotor-pcm.zip" "metadata.json"
+
+#      - name: Push metadata to addons register (official repo)
+# https://stackoverflow.com/questions/63308904/push-to-gitlab-with-access-token-using-github-actions
+# or
+# https://cpina.github.io/push-to-another-repository-docs/generic-example.html#generic-example
