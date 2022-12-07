@@ -8,8 +8,7 @@ jobs:
   pack:
     name: Create PCM archive
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    
     steps:
       - name: Checkout this repository
         uses: actions/checkout@v3
