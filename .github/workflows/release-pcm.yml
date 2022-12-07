@@ -18,11 +18,16 @@ jobs:
       - name: Prepare folders
         run: |
           mkdir plugins resources
-          mv *.py *.png plugins
+          mv *.py *.png kimotor-projectplugins
           mv assets/icon.png resources
           zip -r kimotor-pcm.zip plugins resources metadata.json
 
-      - uses: ncipollo/release-action@v1
-        with:
-          tag: "v0.1.0"
-          artifacts: "kimotor-pcm.zip"
+      - name: Get statistics
+        run: |
+          wget https://gitlab.com/kicad/addons/metadata/-/blob/main/tools/app/util.py
+          python -c 'from util import get_package_stats; print get_package_stats("kimotor-pcm.zip")'
+
+  #    - uses: ncipollo/release-action@v1
+  #      with:
+  #        tag: "v0.1.0"
+  #        artifacts: "kimotor-pcm.zip"
