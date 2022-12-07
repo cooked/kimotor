@@ -19,7 +19,7 @@ jobs:
         run: |
           mkdir plugins resources
           mv *.py *.png plugins
-          mv assets/icon.png assets/kimotor-project resources
+          mv assets/icon.png resources
           zip -r kimotor-pcm.zip plugins resources metadata.json
 
       - uses: ncipollo/release-action@v1

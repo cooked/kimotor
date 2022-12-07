@@ -22,8 +22,7 @@
             "version": "0.1.0",
             "status": "development",
             "kicad_version": "6.0",
-            "download_url": "https://github.com/cooked/kimotor/archive/refs/tags/v0.1.0.zip",
-            "download_sha256": "269ac37f8476d6f7173386f1017f26945e36732dff4f3aa2937ad20b2b53ce4c",
+            "download_url": "https://github.com/cooked/kimotor/releases/download/v0.1.0/kimotor-pcm.zip",
             "platforms": [
                 "linux",
                 "macos",
