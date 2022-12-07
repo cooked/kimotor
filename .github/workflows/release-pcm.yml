@@ -21,16 +21,17 @@ jobs:
           mv assets/icon.png resources
           zip -r kimotor-pcm.zip plugins resources metadata.json
 
-      - name: Get plugin statistics
+      - name: Statistics
         run: |
-          FILE_SHA = $(shasum -a 256 kimotor-pcm.zip)
-          FILE_SIZE = $(wc -c < kimotor-pcm.zip)
-          FILE_SIZE_UC = $(unzip -l kimotor-pcm.zip | tail -1 | xargs | cut -d ' ' -f1)
+          echo "FILE_SHA = $(shasum -a 256 kimotor-pcm.zip)" >> $GITHUB_OUTPUT
+          echo "FILE_SIZE = $(wc -c < kimotor-pcm.zip)" >> $GITHUB_OUTPUT
+          echo "FILE_SIZE_UC = $(unzip -l kimotor-pcm.zip | tail -1 | xargs | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
+        id: stats
 
       - name: Add statistics to metadata
         run: |
           sudo apt-get install jq
-          jq '.versions[0] += {"download_sha256": "${FILE_SHA}", "download_size": "${FILE_SIZE}", "install_size": "${FILE_SIZE_UC}" }' metadata.json
+          jq '.versions[0] += {"download_sha256": "${{ steps.stats.FILE_SHA }}", "download_size": "${{ steps.stats.FILE_SIZE }}", "install_size": "${{ steps.stats.FILE_SIZE_UC }}" }' metadata.json
 
       - uses: ncipollo/release-action@v1
         with:
