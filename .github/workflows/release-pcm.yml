@@ -32,11 +32,10 @@ jobs:
           sudo apt-get install jq
           jq '.versions[0] += {"download_sha256": "${FILE_SHA}", "download_size": "${FILE_SIZE}", "install_size": "${FILE_SIZE_UC}" }' metadata.json
 
-      - name: Release the plugin archive
-        uses: ncipollo/release-action@v1
-          with:
-            tag: "v0.1.0"
-            artifacts: "kimotor-pcm.zip" "metadata.json"
+      - uses: ncipollo/release-action@v1
+        with:
+          tag: "v0.1.0"
+          artifacts: "kimotor-pcm.zip, metadata.json"
 
 #      - name: Push metadata to addons register (official repo)
 # https://stackoverflow.com/questions/63308904/push-to-gitlab-with-access-token-using-github-actions
