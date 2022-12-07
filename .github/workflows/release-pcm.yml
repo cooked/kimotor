@@ -18,7 +18,7 @@ jobs:
       - name: Prepare folders
         run: |
           mkdir plugins resources
-          mv *.py *.png kimotor-projectplugins
+          mv *.py *.png kimotor-project plugins
           mv assets/icon.png resources
           zip -r kimotor-pcm.zip plugins resources metadata.json
 
