@@ -27,14 +27,19 @@ jobs:
           echo "FILE_SIZE = $(wc -c < kimotor-pcm.zip)" >> $GITHUB_ENV
           echo "FILE_SIZE_UC = $(unzip -l kimotor-pcm.zip | tail -1 | xargs | cut -d ' ' -f1)" >> $GITHUB_ENV
 
+      - name: Use the value
+        id: step_two
+        run: |
+            echo "${{ env.FILE_SHA }}"
+            
       - name: Add statistics to metadata
         run: |
           jq '.versions[0] += {"download_sha256": "${{ env.FILE_SHA }}", "download_size": "${{ env.FILE_SIZE }}", "install_size": "${{ env.FILE_SIZE_UC }}" }' metadata.json
 
-      - uses: ncipollo/release-action@v1
-        with:
-          tag: "v0.1.0"
-          artifacts: "kimotor-pcm.zip, metadata.json"
+#      - uses: ncipollo/release-action@v1
+#        with:
+#          tag: "v0.1.0"
+#          artifacts: "kimotor-pcm.zip, metadata.json"
 
 #      - name: Push metadata to addons register (official repo)
 # https://stackoverflow.com/questions/63308904/push-to-gitlab-with-access-token-using-github-actions
