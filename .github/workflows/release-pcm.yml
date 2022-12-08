@@ -29,7 +29,7 @@ jobs:
       - name: Use the value
         id: step_two
         run: |
-            echo ${env.FILE_SIZE}
+            echo ${{env.FILE_SIZE}}
             
       - name: Add statistics to metadata
         run: |
