@@ -76,7 +76,7 @@ jobs:
           echo "GITLAB_USER=stefano.cottafavi" >> $GITHUB_ENV
           echo "GITLAB_REPO=metadata" >> $GITHUB_ENV
           echo "GITLAB_TOKEN=glpat-qyzaZ_s_FbqL6Rx2V2WG" >> $GITHUB_ENV
-
+          echo "GITLAB_TOKEN_NAME=github" >> $GITHUB_ENV
       #- name: Checkout KiCad metadatarepository
       #  uses: actions/checkout@v3
 
@@ -85,7 +85,7 @@ jobs:
       # add check if the folder exists
       - name: Clone GitLab repository
         run: |
-          git clone https://oauth2:${{env.GITLAB_TOKEN}}@gitlab.com/${{env.GITLAB_USER}}/metadata.git --branch kimotor
+          git clone https://${{env.GITLAB_TOKEN_NAME}}:${{env.GITLAB_TOKEN}}@gitlab.com/${{env.GITLAB_USER}}/metadata.git --branch kimotor
           cp metadata.json metadata/packages/com.github.cooked.kimotor
 
       #- name: Push metadata to addons register (own fork of the official KiCad metadata repo on GitLab)
