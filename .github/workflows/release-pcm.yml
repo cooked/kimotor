@@ -32,7 +32,7 @@ jobs:
       - name: Add statistics to metadata
         run: |
           tmp=$(mktemp)
-          jq '.versions[0] += {"download_sha256": "${{ env.FILE_SHA }}", "download_size": "${{ env.FILE_SIZE }}", "install_size": "${{ env.FILE_SIZE_UC }}" }' metadata.json > "$tmp"
+          jq '.versions[0] += {"download_sha256": "${{ env.FILE_SHA }}", "download_size": ${{ env.FILE_SIZE }}, "install_size": ${{ env.FILE_SIZE_UC }} }' metadata.json > "$tmp"
           mv "$tmp" metadata.json
 
       - name: Release artifacts
