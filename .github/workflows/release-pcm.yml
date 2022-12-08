@@ -16,9 +16,7 @@ on:
       tag:
         type: string
         description: Tag to release
-        options: 
-        - monalisa
-        - cschleiden
+
 env:
     GITHUB_TOKEN: ${{ secrets.token }}
 
@@ -87,9 +85,9 @@ jobs:
       # add check if the folder exists
       - name: Clone GitLab repository
         run: |
-          git clone "https://oauth2:${{env.GITLAB_TOKEN}}@gitlab.com/${{env.GITLAB_USER}}/metadata.git" --branch kimotor
+          git clone https://oauth2:${{env.GITLAB_TOKEN}}@gitlab.com/${{env.GITLAB_USER}}/metadata.git --branch kimotor
           cp metadata.json metadata/packages/com.github.cooked.kimotor
-          
+
       #- name: Push metadata to addons register (own fork of the official KiCad metadata repo on GitLab)
       #  run: |
       #    echo Starting to push repo to gitlab
