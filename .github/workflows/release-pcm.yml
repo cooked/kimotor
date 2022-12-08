@@ -4,6 +4,9 @@ name: Release a PCM-compatible archive
 on:
   workflow_dispatch:
 
+env:
+    GITHUB_TOKEN: ${{ secrets.token }}
+
 jobs:
   pack:
     name: Create PCM archive
@@ -22,14 +25,13 @@ jobs:
 
       - name: Stats
         run: |
-          echo "FILE_SHA = $(shasum -a 256 kimotor-pcm.zip)" >> $GITHUB_ENV
-          echo "FILE_SIZE = $(wc -c < kimotor-pcm.zip)" >> $GITHUB_ENV
-          echo "FILE_SIZE_UC = $(unzip -l kimotor-pcm.zip | tail -1 | xargs | cut -d ' ' -f1)" >> $GITHUB_ENV
-
+          echo "FILE_SHA=$(shasum -a 256 kimotor-pcm.zip)" >> $GITHUB_ENV
+          echo "FILE_SIZE=$(wc -c < kimotor-pcm.zip)" >> $GITHUB_ENV
+          echo "FILE_SIZE_UC=$(unzip -l kimotor-pcm.zip | tail -1 | xargs | cut -d ' ' -f1)" >> $GITHUB_ENV
+        
       - name: Use the value
-        id: step_two
         run: |
-            echo $FILE_SIZE
+            echo ${{ env.FILE_SIZE }}
             
       - name: Add statistics to metadata
         run: |
