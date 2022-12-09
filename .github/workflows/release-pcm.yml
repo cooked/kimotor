@@ -87,7 +87,8 @@ jobs:
         run: |
           git clone https://${{env.GITLAB_TOKEN_NAME}}:${{env.GITLAB_TOKEN}}@gitlab.com/${{env.GITLAB_USER}}/metadata.git --branch kimotor
           cp metadata.json metadata/packages/com.github.cooked.kimotor
-
+          cd metadata
+          git status
       #- name: Push metadata to addons register (own fork of the official KiCad metadata repo on GitLab)
       #  run: |
       #    echo Starting to push repo to gitlab
