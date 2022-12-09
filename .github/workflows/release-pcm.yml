@@ -81,6 +81,7 @@ jobs:
       #  uses: actions/checkout@v3
 
       # TODO: 
+      # see https://github.com/actions/checkout/issues/24
       # add check if the branch exists
       # add check if the folder exists
       - name: Clone GitLab repository
