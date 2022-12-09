@@ -1,5 +1,5 @@
 
-name: Release a PCM-compatible archive
+name: Test
 
 on:
   # Run on new tag pushed
