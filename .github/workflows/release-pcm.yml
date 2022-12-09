@@ -6,16 +6,21 @@ on:
   push:
     tags:        
       - 'v*'
-  # Run on release created online
+  # TODO: Run on release created online
   release:
     types:
       - created
-  # Run manually
+  # TODO: WIP - Run manually
   workflow_dispatch:
     inputs:
       tag:
         type: string
         description: Tag to release
+        default: "v0.0.0"
+      deploy:
+        type: boolean
+        description: Deploy to KiCad repo
+        default: false
 
 env:
     GITHUB_TOKEN: ${{ secrets.token }}
@@ -29,9 +34,17 @@ jobs:
       - name: Checkout this repository
         uses: actions/checkout@v3
 
-      - name: Set env
+      # Get version
+      - if: github.event_name == 'push'
         run: |
           echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "RELEASE_VERSION=${{github.event.inputs.tag}}" >> $GITHUB_ENV
+
+
+      - name: Set env
+        run: |
           echo "PACKAGE_NAME=${{ github.event.repository.name }}-pcm.zip" >> $GITHUB_ENV
           echo "DL_URL=${{github.server_url}}/${{github.repository}}/releases/download" >> $GITHUB_ENV
 
@@ -70,28 +83,29 @@ jobs:
             ${{env.PACKAGE_NAME}}
             metadata.json
 
-      # TODO: Push to GitLab
-      # provide gitlab username, repo (kicad fixed fork), branch (default to same name as this repo)
+      # Push to KiCad GitLab repo
+      # provide gitlab username, repo (kicad fixed fork)
       - name: Set env
         run: |
+          echo "GH_NAME=${{github.actor}}" >> $GITHUB_ENV
+          echo "GH_EMAIL=${{github.actor}}@users.noreply.github.com" >> $GITHUB_ENV
           echo "GITLAB_USER=stefano.cottafavi" >> $GITHUB_ENV
           echo "GITLAB_REPO=metadata" >> $GITHUB_ENV
           echo "GITLAB_TOKEN=glpat-qyzaZ_s_FbqL6Rx2V2WG" >> $GITHUB_ENV
           echo "GITLAB_TOKEN_NAME=github" >> $GITHUB_ENV
-      #- name: Checkout KiCad metadatarepository
-      #  uses: actions/checkout@v3
 
       # TODO: 
-      # see https://github.com/actions/checkout/issues/24
-      # add check if the branch exists
-      # add check if the folder exists
+      # add check if the branch exists (branch there defaults to same name as this repo)
+      # add check if the plugin folder exists
+      # can we use checkout action with an external repo? (looks like NO, see https://github.com/actions/checkout/issues/24
       - name: Clone GitLab repository
+        if: github.event.inputs.deploy == 'true'
         run: |
           git clone https://${{env.GITLAB_TOKEN_NAME}}:${{env.GITLAB_TOKEN}}@gitlab.com/${{env.GITLAB_USER}}/metadata.git --branch kimotor
           cp metadata.json metadata/packages/com.github.cooked.kimotor
           cd metadata
-          git config user.name "Stefano Cottafavi"
-          git config user.email "stefano.cottafavi@gmail.com"
+          git config user.name "${{env.GH_NAME}}"
+          git config user.email "${{env.GH_EMAIL}}"
           git commit -am "updated metadata.json"
           git push origin @
 
