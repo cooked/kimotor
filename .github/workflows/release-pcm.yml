@@ -61,6 +61,7 @@ jobs:
           jq '.versions[0] += {"download_sha256": "${{ env.FILE_SHA }}", "download_size": ${{ env.FILE_SIZE }}, "install_size": ${{ env.FILE_SIZE_UC }} }' metadata.json > "$tmp"
           mv "$tmp" metadata.json
 
+      # NOTE:
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -86,11 +87,11 @@ jobs:
       # add check if the folder exists
       - name: Clone GitLab repository
         run: |
-          git config user.name "Stefano Cottafavi"
-          git config user.email "stefano.cottafavi@gmail.com"
           git clone https://${{env.GITLAB_TOKEN_NAME}}:${{env.GITLAB_TOKEN}}@gitlab.com/${{env.GITLAB_USER}}/metadata.git --branch kimotor
           cp metadata.json metadata/packages/com.github.cooked.kimotor
           cd metadata
+          git config user.name "Stefano Cottafavi"
+          git config user.email "stefano.cottafavi@gmail.com"
           git commit -am "updated metadata.json"
 
 # https://stackoverflow.com/questions/63308904/push-to-gitlab-with-access-token-using-github-actions
