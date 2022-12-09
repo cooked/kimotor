@@ -45,7 +45,7 @@ jobs:
 
 
       - name: Set env (only if deploy)
-        if: ${{ github.event.inputs.tag.deploy == 'true' }}
+        if: github.event.inputs.tag.deploy == 'true'
         run: |
           echo USER_NAME=${{github.actor}}
           echo USER_EMAIL=${{github.actor}}@users.noreply.github.com
