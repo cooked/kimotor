@@ -23,6 +23,6 @@ jobs:
 
       - name: KiCad stuff
         id: foo
-        uses: cooked/actions-kicad-plugin@v1
+        uses: cooked/actions-kicad-plugin@master
         with:
           who-to-greet: 'Mona the Octocat'
