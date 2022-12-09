@@ -93,6 +93,7 @@ jobs:
           git config user.name "Stefano Cottafavi"
           git config user.email "stefano.cottafavi@gmail.com"
           git commit -am "updated metadata.json"
+          git push origin @
 
 # https://stackoverflow.com/questions/63308904/push-to-gitlab-with-access-token-using-github-actions
 # or
