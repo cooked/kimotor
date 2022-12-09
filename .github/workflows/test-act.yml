@@ -5,9 +5,8 @@ name: Build and Test
 
 on:
   push:
-    branches:
-      - main
-      - releases/*
+  
+  workflow_dispatch:
 
 jobs:
   test:
