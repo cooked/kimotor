@@ -26,3 +26,4 @@ jobs:
         with:
           tag: 'v0.0.0'
           deploy: true
+          gitlab_user: 'stefano.cottafavi'
