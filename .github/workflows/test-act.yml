@@ -60,7 +60,6 @@ jobs:
         uses: cooked/actions-kicad-plugin@master
         with:
           version: ${{ env.VERSION }}
-          desc: "KiMotor is a tool for the design of parametric PCB motor stators' including coils, thermals, outline and mounting holes"
           deploy: true
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'
