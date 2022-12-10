@@ -25,3 +25,4 @@ jobs:
         uses: cooked/actions-kicad-plugin@master
         with:
           tag: 'v0.0.0'
+          deploy: true
