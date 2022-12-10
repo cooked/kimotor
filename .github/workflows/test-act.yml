@@ -20,6 +20,9 @@ on:
         description: Deploy to KiCad repo
         default: false
 
+permissions:
+  contents: read
+  
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -37,4 +40,3 @@ jobs:
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'
           gitlab_token: ${{ secrets.GITLAB_TOKEN }}
-          
