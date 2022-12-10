@@ -20,8 +20,8 @@ on:
         description: Deploy to KiCad repo
         default: false
 
-permissions:
-  contents: read
+env:
+  MY_SECRET: "${{ secrets.GITLAB_TOKEN }}"
   
 jobs:
   test:
@@ -39,4 +39,4 @@ jobs:
           deploy: true
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'
-          gitlab_token: ${{ secrets.GITLAB_TOKEN }}
+          gitlab_token: ${{env.MY_SECRET}}
