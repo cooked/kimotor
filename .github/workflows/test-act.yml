@@ -39,9 +39,11 @@ jobs:
       - if: github.event_name == 'push'
         run: |
           echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          echo "VERSION=${TAG:1}" >> $GITHUB_ENV
       - if: github.event_name == 'workflow_dispatch'
         run: |
           echo "TAG=${{github.event.inputs.tag}}" >> $GITHUB_ENV
+          echo "VERSION=${TAG:1}" >> $GITHUB_ENV
 
 
       # Create tag, if triggered manually
@@ -57,7 +59,8 @@ jobs:
       - name: Create and Deploy KiCad plugin
         uses: cooked/actions-kicad-plugin@master
         with:
-          tag: ${{ env.TAG }}
+          version: ${{ env.VERSION }}
+          desc: "KiMotor is a tool for the design of parametric PCB motor stators' including coils, thermals, outline and mounting holes"
           deploy: true
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'

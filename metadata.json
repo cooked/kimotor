@@ -1,33 +1,20 @@
 {
     "$schema": "https://go.kicad.org/pcm/schemas/v1",
-    "name": "KiMotor",
-    "description": "A tool to design parametric PCB motors",
-    "description_full": "KiMotor is a tool for the design of parametric PCB motor stators' including coils, thermals, outline and mounting holes",
-    "identifier": "com.github.cooked.kimotor",
-    "type": "plugin",
+    "name": "",
+    "description": "",
+    "description_full": "",
+    "identifier": "",
+    "type": "",
     "author": {
-        "name": "cooked",
-        "contact": {
-            "email": "stefano.cottafavi@gmail.com",
-            "web": "https://www.stefanocottafavi.com"
-        }
+        "name": ""
     },
-    "license": "GPL-2.0",
-    "resources": {
-        "Github": "https://github.com/cooked/kimotor",
-        "Readme": "https://github.com/cooked/kimotor/blob/master/README.md"
-    },
+    "license": "",
     "versions": [
         {
-            "version": "0.1.0",
-            "status": "development",
-            "kicad_version": "6.0",
-            "download_url": "https://github.com/cooked/kimotor/releases/download/v0.1.0/kimotor-pcm.zip",
-            "platforms": [
-                "linux",
-                "macos",
-                "windows"
-            ]
+            "version": "",
+            "status": "",
+            "kicad_version": "",
+            "download_url": ""
         }
     ]
 }
