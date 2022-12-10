@@ -6,10 +6,16 @@
     "identifier": "",
     "type": "",
     "author": {
-        "name": ""
+        "name": "",
+        "contact": {
+            "web": ""
+        }
     },
     "maintainer": {
-        "name": ""
+        "name": "",
+        "contact": {
+            "web": ""
+        }
     },
     "license": "",
     "versions": [
