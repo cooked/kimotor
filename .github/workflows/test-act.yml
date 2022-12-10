@@ -32,7 +32,6 @@ jobs:
         uses: actions/checkout@v3
       
       - name: Create and Deploy KiCad plugin
-        if: github.event_name == 'push'
         uses: cooked/actions-kicad-plugin@master
         with:
           tag: ${{github.event.inputs.tag}}
