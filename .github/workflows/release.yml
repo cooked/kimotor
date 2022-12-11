@@ -28,37 +28,45 @@ env:
   
 
 jobs:
-  test:
+
+  release-manual:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v3
-      
-      # Handle auto and manual tag
-      - if: github.event_name == 'push'
-        run: |
-          echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-          VERSION=${GITHUB_REF#refs/*/}
-          echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
-      - if: github.event_name == 'workflow_dispatch'
-        run: |
+      - run: |
           echo "TAG=${{github.event.inputs.tag}}" >> $GITHUB_ENV
           VERSION=${{github.event.inputs.tag}}
           echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
-
-      # Create tag, if triggered manually
       - name: Create Tag
-        if: github.event_name == 'workflow_dispatch'
         uses: negz/create-tag@v1
         with:
           version: ${{ env.TAG }}
           message: "Tag created automatically"
           token: ${{env.GH_SECRET}}
-
-
       - name: Create and Deploy KiCad plugin
-        uses: cooked/actions-kicad-plugin@master
+        uses: cooked/actions-kicad-addon@master
+        with:
+          version: ${{ env.VERSION }}
+          deploy: ${{inputs.deploy}}
+          gitlab_user: 'stefano.cottafavi'
+          gitlab_name: 'github'
+          gitlab_token: ${{env.GL_SECRET}}
+
+
+  release-push:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - run: |
+          echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          VERSION=${GITHUB_REF#refs/*/}
+          echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
+      - name: Create and Deploy KiCad plugin
+        uses: cooked/actions-kicad-addon@master
         with:
           version: ${{ env.VERSION }}
           deploy: true
