@@ -48,6 +48,7 @@ jobs:
         uses: cooked/actions-kicad-addon@master
         with:
           version: ${{ env.VERSION }}
+          status: "development"
           deploy: ${{inputs.deploy}}
           desc: "PCB motor parametric design and layout"
           desc_full: "PCB motor parametric design and layout"
@@ -70,6 +71,7 @@ jobs:
         uses: cooked/actions-kicad-addon@master
         with:
           version: ${{ env.VERSION }}
+          status: "development"
           deploy: true
           desc: "PCB motor parametric design and layout"
           desc_full: "PCB motor parametric design and layout"
