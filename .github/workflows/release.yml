@@ -50,6 +50,7 @@ jobs:
           version: ${{ env.VERSION }}
           deploy: ${{inputs.deploy}}
           desc: "PCB motor parametric design and layout"
+          desc_full: "PCB motor parametric design and layout"
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'
           gitlab_token: ${{env.GL_SECRET}}
@@ -71,6 +72,7 @@ jobs:
           version: ${{ env.VERSION }}
           deploy: true
           desc: "PCB motor parametric design and layout"
+          desc_full: "PCB motor parametric design and layout"
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'
           gitlab_token: ${{env.GL_SECRET}}
