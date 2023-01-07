@@ -21,7 +21,6 @@ on:
         description: Deploy to KiCad repo
         default: false
 
-
 env:
   GH_SECRET: "${{ secrets.GITHUB_TOKEN }}"
   GL_SECRET: "${{ secrets.GITLAB_TOKEN }}"
@@ -50,6 +49,7 @@ jobs:
         with:
           version: ${{ env.VERSION }}
           deploy: ${{inputs.deploy}}
+          desc: "PCB motor parametric design and layout"
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'
           gitlab_token: ${{env.GL_SECRET}}
@@ -70,6 +70,7 @@ jobs:
         with:
           version: ${{ env.VERSION }}
           deploy: true
+          desc: "PCB motor parametric design and layout"
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'
           gitlab_token: ${{env.GL_SECRET}}
