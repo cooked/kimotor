@@ -109,12 +109,23 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
     # initializers
     def init_config(self):
-        # init paths
-        settings = pcbnew.SETTINGS_MANAGER_GetUserSettingsPath()
+        
+        self.fp_path = None
+
+        # check modified paths
+        settings = pcbnew.SETTINGS_MANAGER.GetUserSettingsPath()
         with open(settings+'/kicad_common.json', 'r') as f:
             data = json.load(f)
-            
-            self.fp_path = data['environment']['vars']['KICAD6_FOOTPRINT_DIR']
+            if not (data["environment"]["vars"] is None) and "KICAD6_FOOTPRINT_DIR" in data["environment"]["vars"]:
+                self.fp_path = data["environment"]["vars"]["KICAD6_FOOTPRINT_DIR"]
+
+        # check default paths
+        if self.fp_path is None:
+            self.fp_path = os.getenv("KICAD6_FOOTPRINT_DIR", default=None)
+        
+        # no library found
+        if self.fp_path is None:
+            wx.LogError("Footprint library not found - Make sure the KiCad paths are properly configured.")
 
     def init_nets(self):
         # init paths
