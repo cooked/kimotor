@@ -52,6 +52,8 @@ jobs:
           deploy: ${{inputs.deploy}}
           desc: "PCB motor parametric design and layout"
           desc_full: "PCB motor parametric design and layout"
+          author_name: "Stefano Cottafavi"
+          maintainer_name: "Stefano Cottafavi"
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'
           gitlab_token: ${{env.GL_SECRET}}
@@ -75,6 +77,8 @@ jobs:
           deploy: true
           desc: "PCB motor parametric design and layout"
           desc_full: "PCB motor parametric design and layout"
+          author_name: "Stefano Cottafavi"
+          maintainer_name: "Stefano Cottafavi"
           gitlab_user: 'stefano.cottafavi'
           gitlab_name: 'github'
           gitlab_token: ${{env.GL_SECRET}}
