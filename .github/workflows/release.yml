@@ -55,7 +55,7 @@ jobs:
           author_name: "Stefano Cottafavi"
           maintainer_name: "Stefano Cottafavi"
           gitlab_user: 'stefano.cottafavi'
-          gitlab_name: 'github'
+          gitlab_email: 'stefano.cottafavi@gmail.com'
           gitlab_token: ${{env.GL_SECRET}}
 
 
@@ -80,5 +80,5 @@ jobs:
           author_name: "Stefano Cottafavi"
           maintainer_name: "Stefano Cottafavi"
           gitlab_user: 'stefano.cottafavi'
-          gitlab_name: 'github'
+          gitlab_email: 'stefano.cottafavi@gmail.com'
           gitlab_token: ${{env.GL_SECRET}}
