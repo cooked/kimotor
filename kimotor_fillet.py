@@ -19,7 +19,7 @@ def fillet(board, group, t1, t2, r, side=1):
         t1 (_type_): first track
         t2 (_type_): second track
         r (_type_): fillet radius
-        side (_type_): side of the arc to offeset (1:R, -1:L) 
+        side (_type_): side of the arc to offeset (1:R, -1:L)
     """
 
     t1_arc = t1.GetClass() == 'PCB_ARC'
@@ -70,20 +70,20 @@ def fillet(board, group, t1, t2, r, side=1):
         l = np.array([c, [t1e.x, t1e.y, 0]])
         lv = kla.line_vec(l)
         m = c + np.dot(r, lv)
-        
-    
-    # generate fillet track 
+
+
+    # generate fillet track
     t = pcbnew.PCB_ARC(board)
     t.SetLayer( t1.GetLayer() )
     t.SetWidth( t1.GetWidth() )
-    t.SetStart( pcbnew.wxPoint(int(p1[0]),int(p1[1])) )
-    t.SetMid( pcbnew.wxPoint(int(m[0]),int(m[1])) )
-    t.SetEnd( pcbnew.wxPoint(int(p2[0]),int(p2[1])) )
+    t.SetStart( pcbnew.VECTOR2I(int(p1[0]),int(p1[1])) )
+    t.SetMid( pcbnew.VECTOR2I(int(m[0]),int(m[1])) )
+    t.SetEnd( pcbnew.VECTOR2I(int(p2[0]),int(p2[1])) )
     board.Add(t)
     group.AddItem(t)
     # trim tracks
-    t1.SetEnd( pcbnew.wxPoint(p1[0],p1[1])  )
-    t2.SetStart( pcbnew.wxPoint(p2[0],p2[1])  )
+    t1.SetEnd( pcbnew.VECTOR2I(int(p1[0]),int(p1[1]))  )
+    t2.SetStart( pcbnew.VECTOR2I(int(p2[0]),int(p2[1]))  )
 
 ## borrowed from fillet_helper.py
 ## https://github.com/tywtyw2002/FilletEdge/blob/master/fillet_helper.py
@@ -98,10 +98,10 @@ def fillet_outline(board, a, b, fillet_value):
         b_reverse = 1
         a_set = a.SetStart
         b_set = b.SetStart
-        co_point = pcbnew.wxPoint(a_s.x, a_s.y)
+        co_point = pcbnew.VECTOR2I(a_s.x, a_s.y)
 
         if a_e == b_s or a_e == b_e:
-            co_point = pcbnew.wxPoint(a_e.x, a_e.y)
+            co_point = pcbnew.VECTOR2I(a_e.x, a_e.y)
             a_set = a.SetEnd
             a_reverse = -1
         elif a_s != b_s and a_s != b_e:
@@ -134,11 +134,11 @@ def fillet_outline(board, a, b, fillet_value):
         if int(deg) != 90 and int(deg) != -90:
             offset = abs(offset * math.tan((math.pi - theta) / 2))
 
-        a_point = pcbnew.wxPoint(
+        a_point = pcbnew.VECTOR2I(
             int(co_point.x + offset * math.cos(a_v.Angle())),
             int(co_point.y - offset * math.sin(a_v.Angle()))
         )
-        b_point = pcbnew.wxPoint(
+        b_point = pcbnew.VECTOR2I(
             int(co_point.x + offset * math.cos(b_v.Angle())),
             int(co_point.y - offset * math.sin(b_v.Angle()))
         )
@@ -159,16 +159,16 @@ def fillet_outline(board, a, b, fillet_value):
 
         c_v = a_v.Resize(1000000) + b_v.Resize(1000000)
         c_angle = c_v.Angle()
-        
+
         if offset == fillet_value:
             # 90 or -90
-            s_arc.SetCenter(pcbnew.wxPoint(
+            s_arc.SetCenter(pcbnew.VECTOR2I(
                 a_point.x + b_point.x - co_point.x,
                 a_point.y + b_point.y - co_point.y
             ))
         else:
             coffset = abs(fillet_value / math.cos((math.pi - theta) / 2))
-            s_arc.SetCenter(pcbnew.wxPoint(
+            s_arc.SetCenter(pcbnew.VECTOR2I(
                 co_point.x + int(coffset * math.cos(c_angle)),
                 co_point.y - int(coffset * math.sin(c_angle))
             ))

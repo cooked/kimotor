@@ -9,9 +9,9 @@ def calc_length(board):
     tot = 0
     for track in board.GetTracks():
         l = track.GetLength()
-        tot += l/pcbnew.IU_PER_MM
+        tot += l/pcbnew.FromMM(1)
 
-    return tot 
+    return tot
 
 def calc_rlc(board, w, t, temp=20):
     """ Calculate resistance, inductance and capacitance of a track
@@ -31,9 +31,9 @@ def calc_rlc(board, w, t, temp=20):
     A = w*t
     r = rho * L/A
     rt = r * (1+alpha*(temp-20))
-    
+
 
     # https://resources.system-analysis.cadence.com/blog/msa2021-is-there-a-pcb-trace-inductance-rule-of-thumb
-    
+
 
     return rt
