@@ -340,7 +340,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer22111.Add( self.lbl_refresh_time1122, 0, wx.ALL, 5 )
 
-		self.m_ctrlRfill = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 100, 0.200000, 0.1 )
+		self.m_ctrlRfill = wx.SpinCtrlDouble( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 0, 100, 0.000000, 0.1 )
 		self.m_ctrlRfill.SetDigits( 2 )
 		self.m_ctrlRfill.SetToolTip( u"Radius used to smooth the coil corners" )
 
