@@ -18,15 +18,14 @@
         }
     },
     "license": "GPL-2.0",
+    "resources": {
+        "homepage": "https://github.com/cooked/kimotor"
+    },
     "versions": [
         {
             "version": "0.1.99",
             "status": "development",
-            "kicad_version": "6.0",
-            "download_url": "https://github.com/cooked/kimotor/releases"
+            "kicad_version": "6.0"
         }
-    ],
-    "resources": {
-        "homepage": "https://github.com/cooked/kimotor"
-    }
+    ]
 }
