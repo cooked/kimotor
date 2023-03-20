@@ -23,7 +23,7 @@
             "version": "0.1.99",
             "status": "development",
             "kicad_version": "6.0",
-            "download_url": ""
+            "download_url": "https://github.com/cooked/kimotor/releases"
         }
     ],
     "resources": {
