@@ -85,24 +85,24 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.rot = (self.roc + (self.ro-self.w_mnt)) / 2
 
         # generate and connect coils
-        coil_t = self.do_coils(self.nl, self.ri, self.roc)
+        coil_t = self.do_coils(self.nl, self.ri, self.roc, self.loops)
 
-        drc = max(self.dr, self.d_via)
-        ext_t, int_t = self.do_races(drc, self.roc, self.ri)
-        self.do_junctions( coil_t, ext_t, int_t)
-        self.do_terminals_motor( self.rot, ext_t )
+        # drc = max(self.dr, self.d_via)
+        # ext_t, int_t = self.do_races(drc, self.roc, self.ri)
+        # self.do_junctions( coil_t, ext_t, int_t)
+        # self.do_terminals_motor( self.rot, ext_t )
 
-        outline = self.m_cbOutline.GetSelection()
-        self.via_rows = 2
+        # outline = self.m_cbOutline.GetSelection()
+        # self.via_rows = 2
 
-        # draw board outlines
-        self.do_outline( self.rb, self.ro, outline, 8, self.o_fill)
-        # create mounting holes
-        self.do_mounts_footprint( outline )
-        # apply thermal zones
-        self.do_thermal(outline)
-        # draw silks
-        self.do_silk( self.roc+self.trk_w, self.ri )
+        # # draw board outlines
+        # self.do_outline( self.rb, self.ro, outline, 8, self.o_fill)
+        # # create mounting holes
+        # self.do_mounts_footprint( outline )
+        # # apply thermal zones
+        # self.do_thermal(outline)
+        # # draw silks
+        # self.do_silk( self.roc+self.trk_w, self.ri )
 
         # update board
         pcbnew.Refresh()
@@ -146,9 +146,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     def init_parameters(self):
 
         # get gui values and fix units (mm converted to nm where needed)
-        self.nl     = int(self.m_ctrlLayers.GetValue())
+        self.nl     = 2 # int(self.m_ctrlLayers.GetValue())
         self.poles  = int(self.m_ctrlPoles.GetValue())
-        self.loops  = int(self.m_ctrlLoops.GetValue())
+        self.loops  = 2 #int(self.m_ctrlLoops.GetValue())
 
         self.trk_w = int(self.m_ctrlTrackWidth.GetValue() * self.SCALE) # track width
         self.dr = self.trk_w * 2                                        # track distance
@@ -198,15 +198,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             _type_: _description_
         """
 
-        # 0: no arcs, 1: outer-arc only, 2: outer and inner arc
-        arc_mode = 2
-        if arc_mode == 1:
-            skip = 4
-        elif arc_mode == 2:
-            skip = 2
+        # skip:  0: no arcs, 2: outer and inner arc, 4: outer-arc only
+        skip = 2
 
-        start_index = 1 if layer==0 else 0
-        startf = Tf[start_index]
+        idx_start = 1 if layer==0 else 0
+
+        startf = Tf[idx_start]
 
         # keep track of the outer and inner vertexes (arcs mids)
         iv = 0
@@ -214,15 +211,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         # 1st coil point
         if layer != 0:
-            #mps = pcbnew.wxPoint( int(Tfvi[ivi][0,0]), int(Tfvi[ivi][0,1]) )
-            #ivi += 1
             cs = self.fpoint( int(Tfvi[ivi][0,0]), int(Tfvi[ivi][0,1]) )
             ivi += 1
             t = pcbnew.PCB_TRACK(self.board)
             t.SetWidth( self.trk_w )
             t.SetLayer( layer )
             t.SetStart( cs )
-            #t.SetMid( mps )
             t.SetEnd( self.fpoint( int(startf[0,0]), int(startf[0,1]) ) )
             self.board.Add(t)
             group.AddItem(t)
@@ -230,19 +224,11 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             cs = self.fpoint( int(startf[0,0]), int(startf[0,1]) )
 
 
-        for idx, tf in enumerate(Tf[start_index+1:]):
+        for idx, tf in enumerate(Tf[idx_start+1:]):
 
-            # start point (p1), end point (p2) of track segment
-            p1 = self.fpoint( int(startf[0,0]), int(startf[0,1]) )
-            p2 = self.fpoint( int(tf[0,0]), int(tf[0,1]) )
-
-            idx_shift = 1 if start_index==0 else 0
-            if not (idx-idx_shift)%skip:
-
-                t = pcbnew.PCB_ARC(self.board)
-
+            if not (idx-(not idx_start))%skip:
                 # outer
-                if not (idx-idx_shift)%4:
+                if not (idx-(not idx_start))%4:
                     tfv = Tfv[iv]
                     iv += 1
                     side = 1
@@ -252,31 +238,43 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     ivi += 1
                     side = -1
 
-                pm = self.fpoint( int(tfv[0,0]), int(tfv[0,1]) )
-
-                t.SetMid( pm )
+                t = pcbnew.PCB_ARC(self.board)
+                t.SetMid( self.fpoint( int(tfv[0,0]), int(tfv[0,1]) ) )
 
             else:
                 t = pcbnew.PCB_TRACK(self.board)
 
+            t.SetStart( self.fpoint( int(startf[0,0]), int(startf[0,1]) ) )
+            t.SetEnd( self.fpoint( int(tf[0,0]), int(tf[0,1]) ) )
             t.SetWidth( self.trk_w )
             t.SetLayer( layer )
-            t.SetStart( p1 )
-            t.SetEnd( p2 )
             self.board.Add(t)
             group.AddItem(t)
 
             # fillet
-            if idx > start_index and self.r_fill > 0:
-                self.fillet(self.board, group, track0f, t, self.r_fill, side)
+            if idx > idx_start and self.r_fill > 0:
+
+                fp1, fp2, fm = self.fillet(track0f, t, self.r_fill, side)
+
+                # generate fillet track
+                f = pcbnew.PCB_ARC(self.board)
+                f.SetLayer( t.GetLayer() )
+                f.SetWidth( t.GetWidth() )
+                f.SetStart( self.fpoint(int(fp1[0]),int(fp1[1])) )
+                f.SetMid( self.fpoint(int(fm[0]),int(fm[1])) )
+                f.SetEnd( self.fpoint(int(fp2[0]),int(fp2[1])) )
+                self.board.Add(f)
+                group.AddItem(f)
+                # trim tracks
+                track0f.SetEnd( self.fpoint(int(fp1[0]),int(fp1[1]))  )
+                t.SetStart( self.fpoint(int(fp2[0]),int(fp2[1]))  )
 
             track0f = t
             startf = tf
 
-            # TODO: trim inner
-
-            # trim coil if last outer side
+            # trim coil if last (most internal) outer side
             if iv == len(Tfv):
+                pm = self.fpoint( int(tfv[0,0]), int(tfv[0,1]) )
                 m = kla.track_arc_trim(t, pm)
                 pmt = self.fpoint(int(m[0]),int(m[1]))
                 t.SetEnd( pm )
@@ -288,7 +286,17 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         return [cs, ce]
 
-    def do_coils(self, ln, ri, ro, mode=0):
+    # DEBUG/TEST of the fillet bug only
+    def test_fillet_bug(self):
+        
+        r1 = int(50 * self.SCALE)
+        r2 = int(100 * self.SCALE)
+        loops = 8
+
+        coil_t = self.do_coils(1, r1, r2, loops)
+
+
+    def do_coils(self, ln, ri, ro, loops, mode=0):
         """ Generate the coil tracks (with fillet) over the given PCB layers
 
         Args:
@@ -328,14 +336,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #w2 = 10 * 1e6 #ri * math.cos(th0/2 - dth)
 
         # coil (corners, mid-points)
-        pcu0, pcu0m, pcu0mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
-        pcu1, pcu1m, pcu1mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
+        pcu0, pcu0m, pcu0mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, loops, 0 )
+        pcu1, pcu1m, pcu1mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, loops, 1 )
 
         # coil terminals
         coil_t = []
         # poles
         for p in range(self.poles):
-
             pgroup = pcbnew.PCB_GROUP( self.board )
             pgroup.SetName("pole_"+str(p))
             self.board.Add(pgroup)
@@ -393,9 +400,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             coil_t.append(coil_se)
 
             # stats (single pole only)
-            if p==0:
-                self.tl = self.stats_length(self.board)
-                self.tr = self.stats_rlc(self.board, self.trk_w/self.SCALE/1000, self.tthick)
+            #if p==0:
+            #    self.tl = self.stats_length(self.board)
+            #    self.tr = self.stats_rlc(self.board, self.trk_w/self.SCALE/1000, self.tthick)
 
         return coil_t
 
@@ -482,7 +489,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         #  terminals tracks, inter-coils tracks (incl. star-connection as last of int_t))
         return ext_t, int_t;
-
     def do_junctions(self, coil, ext_t, int_t):
         # coil: contains start and end points of each coil
         # trm: contains terminals' races end points
@@ -548,7 +554,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             via.SetWidth( self.d_via )
             self.board.Add(via)
             self.group.AddItem(via)
-
     def do_terminals_motor(self, r, ext_t):
         """ Create motor terminal contacts and connect them to the coil terminations
 
@@ -738,7 +743,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
 
         filler.Fill(self.board.Zones())
-
     def do_mounts_footprint(self, outline=0):
         # no: number of outer mount points
         # ni: number of inner shaft mount points
@@ -812,7 +816,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 self.board.Add(m)
 
         return 0
-
     def do_mounts(self, outline=0, df=3):
         # no: number of outer mount points
         # ni: number of inner shaft mount points
@@ -955,11 +958,10 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #     self.board.Add(c)
         return
 
-    def fillet(self, board, group, t1, t2, r, side=1):
+    def fillet(self, t1, t2, r, side=1):
         """ Generate fillet between two tracks
 
         Args:
-            board (_type_): board object the tracks belong to
             t1 (_type_): first track
             t2 (_type_): second track
             r (_type_): fillet radius
@@ -1015,19 +1017,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             lv = kla.line_vec(l)
             m = c + np.dot(r, lv)
 
-
-        # generate fillet track
-        t = pcbnew.PCB_ARC(board)
-        t.SetLayer( t1.GetLayer() )
-        t.SetWidth( t1.GetWidth() )
-        t.SetStart( self.fpoint(int(p1[0]),int(p1[1])) )
-        t.SetMid( self.fpoint(int(m[0]),int(m[1])) )
-        t.SetEnd( self.fpoint(int(p2[0]),int(p2[1])) )
-        board.Add(t)
-        group.AddItem(t)
-        # trim tracks
-        t1.SetEnd( self.fpoint(int(p1[0]),int(p1[1]))  )
-        t2.SetStart( self.fpoint(int(p2[0]),int(p2[1]))  )
+        return p1, p2, m
 
     ## borrowed from fillet_helper.py
     ## https://github.com/tywtyw2002/FilletEdge/blob/master/fillet_helper.py
@@ -1192,6 +1182,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     def on_btn_generate(self, event):
         #self.logger.info("Generate stator coils")
         self.generate()
+        #self.test_fillet_bug()
         event.Skip()
 
     # https://docs.wxpython.org/wx.FileDialog.html
