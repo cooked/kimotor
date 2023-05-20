@@ -17,10 +17,9 @@ def line_vec(l):
     # line unit vector
     p1 = l[0]   # start point [x,y]
     p2 = l[1]   # end point [x, y]
-    dx = p2[0]-p1[0]
-    dy = p2[1]-p1[1]
-    d = math.sqrt(dx**2 + dy**2)
-    v = np.array([ dx/d, dy/d, 0])
+    d = np.array([ p2[0]-p1[0], p2[1]-p1[1], 0])
+    v = d/np.linalg.norm(d)
+
     return v
 
 def line(l):
@@ -309,6 +308,8 @@ def line_arc_center(t1, t2, f, side=1):
     t1_arc = t1.GetClass() == 'PCB_ARC'
     t2_arc = t2.GetClass() == 'PCB_ARC'
 
+    z = np.array([0,0,1])
+
     if t1_arc:
         # solve unit vectors
         v1 = tangent(t1, end=True)    # use the tg to the arc at its END point
@@ -316,8 +317,7 @@ def line_arc_center(t1, t2, f, side=1):
 
         v1u = v1/np.linalg.norm(v1)
         v2u = v2/np.linalg.norm(v2)
-        z = np.array([0,0,1])
-
+        
         # side, cw or ccw
         x = np.cross(v2u,v1u)   # !!!IMPORTANT!!!: order inverted wrt t2_arc
         s = np.sign( np.dot(z,x) )
@@ -328,6 +328,8 @@ def line_arc_center(t1, t2, f, side=1):
         o = t1.GetCenter()
         o = np.array([o.x, o.y])
         r = t1.GetRadius() - side*f
+        
+        wx.LogError(f'v1 {v1}, v2 {v2}, o {o}, r {r}')
 
         # offset line
         p2 = line_points(t2)
@@ -342,7 +344,6 @@ def line_arc_center(t1, t2, f, side=1):
 
         v1u = v1/np.linalg.norm(v1)
         v2u = v2/np.linalg.norm(v2)
-        z = np.array([0,0,1])
 
         # side, cw or ccw
         x = np.cross(v1u,v2u)
@@ -359,6 +360,8 @@ def line_arc_center(t1, t2, f, side=1):
         o = np.array([o.x, o.y])
         r = t2.GetRadius() - side*f
 
+        
+
         c = circle_line_intersect(p1, o, r, 1)
 
     return c
@@ -366,12 +369,6 @@ def line_arc_center(t1, t2, f, side=1):
 # TODO: implement
 def arc_arc_center(t1, t2, f):
     return
-
-
-def normalize(t):
-    # returns (unit vector) direction of the track
-    n = np.array([ t.GetEndX()-t.GetX(), t.GetEndY()-t.GetY() ])
-    return n / t.GetLength()
 
 def tangent(t, end = False):
 
@@ -384,76 +381,15 @@ def tangent(t, end = False):
     tp2 = s if end else e
 
     # radius direction
-    rv = np.array([ tp1.x-to.x, tp1.y-to.y, 0]) / t.GetRadius()
-    # p1 to p2 direction
-    dx = tp2.x-tp1.x
-    dy = tp2.y-tp1.y
-    n = math.sqrt(dx**2+dy**2)
-    pv = np.array([ dx/n, dy/n, 0])
+    ro = np.array([ tp1.x-to.x, tp1.y-to.y, 0])
+    rv = ro/np.linalg.norm(ro)
+    
+    # p1 (arc start) to p2 (arc end) direction
+    rp = np.array([ tp2.x-tp1.x, tp2.y-tp1.y, 0])
+    pv = rp/np.linalg.norm(rp)
 
     x = np.cross(rv,pv)
     z = np.array([0,0,1])
     s = np.sign( np.dot(z,x) )
 
     return np.cross([0,0,s], rv)
-
-# TODO: remove? TBC
-def angle_and_bisect(t1, t2):
-    # find angle and bisect vector between tracks, using tangent if track is arc
-    # (assumes track1_end == track2_start)
-
-    if t1.GetClass() == 'PCB_ARC':
-        v1 = tangent(t1, True)
-    else:
-        t1s = t1.GetStart()
-        t1e = t1.GetEnd()
-        v1 = np.array([ t1e.x-t1s.x, t1e.y-t1s.y, 0 ])
-        v1 = v1 / t1.GetLength()
-
-    if t2.GetClass() == 'PCB_ARC':
-        v2 = tangent(t2)
-    else:
-        v2 = np.array([ t2.GetEndX()-t2.GetX(), t2.GetEndY()-t2.GetY(), 0 ])
-        v2 = v2 / t2.GetLength()
-
-    z = np.array([0,0,1])
-
-
-    d = np.dot(v1,v2)
-    c = np.cross(v1,v2)
-    # +/- rotation?
-    s = np.sign( np.dot(z,c) )
-
-    # angle
-    a = s * math.acos(d)
-
-    # normalized bisect
-    b = (v1+v2) / np.linalg.norm(v1+v2)
-    b = np.cross(b,-z)
-    b = b / np.linalg.norm(b)
-
-    return a, b
-
-# TODO: remove? TBC
-def angle2(t1, t2):
-    # t1: first track
-    # t2: next track
-
-    # if arc, use tangent
-    if t2.GetClass() == 'PCB_ARC':
-        t2c = t2.GetCenter()
-        t2s = t2.GetStart()
-        # radial vector (from center to starting point)
-        t2rv = pcbnew.VECTOR2I( t2s.x-t2c.x, t2s.y-t2c.y )
-        #  vector normal to radius (i.e. tangent to arc at starting point)
-        t2v = - t2rv.Perpendicular()
-    else:
-        t2s = t2.GetStart()
-        t2e = t2.GetEnd()
-        t2v = pcbnew.VECTOR2I( t2e.x-t2s.x, t2e.y-t2s.y )
-
-    t1s = t1.GetStart()
-    t1e = t1.GetEnd()
-    t1v = pcbnew.VECTOR2I( t1e.x-t1s.x, t1e.y-t1s.y )
-
-    return t2v.Angle() - t1v.Angle()

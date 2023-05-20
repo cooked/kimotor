@@ -147,13 +147,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         # get gui values and fix units (mm converted to nm where needed)
         self.nl     = 2 # int(self.m_ctrlLayers.GetValue())
-        self.poles  = int(self.m_ctrlPoles.GetValue())
+        self.poles  = 9 #int(self.m_ctrlPoles.GetValue())
         self.loops  = 2 #int(self.m_ctrlLoops.GetValue())
 
         self.trk_w = int(self.m_ctrlTrackWidth.GetValue() * self.SCALE) # track width
         self.dr = self.trk_w * 2                                        # track distance
         
-        self.r_fill = int(self.m_ctrlRfill.GetValue() * self.SCALE)         # track fillet
+        self.r_fill = int(1*self.SCALE) #int(self.m_ctrlRfill.GetValue() * self.SCALE)         # track fillet
         self.o_fill = int(self.m_ctrlFilletRadius.GetValue() * self.SCALE)  # outline fillet
 
         self.ro = int(self.m_ctrlDout.GetValue() /2 * self.SCALE)
@@ -226,7 +226,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         for idx, tf in enumerate(Tf[idx_start+1:]):
 
-            if not (idx-(not idx_start))%skip:
+            if skip and not (idx-(not idx_start))%skip:
                 # outer
                 if not (idx-(not idx_start))%4:
                     tfv = Tfv[iv]
@@ -254,7 +254,36 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             # fillet
             if idx > idx_start and self.r_fill > 0:
 
-                fp1, fp2, fm = self.fillet(track0f, t, self.r_fill, side)
+                fp1, fp2, fm, fc = self.fillet(track0f, t, self.r_fill, side)
+
+                # test, debug
+                via = pcbnew.PCB_VIA(self.board)
+                via.SetPosition( self.fpoint(int(fc[0]),int(fc[1])) )
+                via.SetDrill( self.d_drill )
+                via.SetWidth( self.d_drill )
+                self.board.Add(via)
+                self.group.AddItem(via)
+
+                via = pcbnew.PCB_VIA(self.board)
+                via.SetPosition( self.fpoint(int(fp1[0]),int(fp1[1])) )
+                via.SetDrill( self.d_drill )
+                via.SetWidth( self.d_drill )
+                self.board.Add(via)
+                self.group.AddItem(via)
+
+                via = pcbnew.PCB_VIA(self.board)
+                via.SetPosition( self.fpoint(int(fp2[0]),int(fp2[1])) )
+                via.SetDrill( self.d_drill )
+                via.SetWidth( self.d_drill )
+                self.board.Add(via)
+                self.group.AddItem(via)
+
+                via = pcbnew.PCB_VIA(self.board)
+                via.SetPosition( self.fpoint(int(fm[0]),int(fm[1])) )
+                via.SetDrill( self.d_drill )
+                via.SetWidth( self.d_drill )
+                self.board.Add(via)
+                self.group.AddItem(via)
 
                 # generate fillet track
                 f = pcbnew.PCB_ARC(self.board)
@@ -272,8 +301,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             track0f = t
             startf = tf
 
-            # trim coil if last (most internal) outer side
-            if iv == len(Tfv):
+            # trim coil if last (most internal) outer side (only if its arc, skip!=0)
+            if skip and iv == len(Tfv):
                 pm = self.fpoint( int(tfv[0,0]), int(tfv[0,1]) )
                 m = kla.track_arc_trim(t, pm)
                 pmt = self.fpoint(int(m[0]),int(m[1]))
@@ -342,7 +371,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # coil terminals
         coil_t = []
         # poles
-        for p in range(self.poles):
+        for p in range(1): #range(self.poles):
             pgroup = pcbnew.PCB_GROUP( self.board )
             pgroup.SetName("pole_"+str(p))
             self.board.Add(pgroup)
@@ -363,7 +392,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             T1v = np.matmul(R, pcu1m.transpose()).transpose()
             T1vi = np.matmul(R, pcu1mi.transpose()).transpose()
 
-            for idx, lyr in enumerate(laypar):
+            for idx, lyr in enumerate(range(1)): #enumerate(laypar):
 
                 # EVEN layers use CCW
                 if idx%2:
@@ -489,6 +518,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         #  terminals tracks, inter-coils tracks (incl. star-connection as last of int_t))
         return ext_t, int_t;
+    
     def do_junctions(self, coil, ext_t, int_t):
         # coil: contains start and end points of each coil
         # trm: contains terminals' races end points
@@ -554,6 +584,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             via.SetWidth( self.d_via )
             self.board.Add(via)
             self.group.AddItem(via)
+    
     def do_terminals_motor(self, r, ext_t):
         """ Create motor terminal contacts and connect them to the coil terminations
 
@@ -743,6 +774,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
 
         filler.Fill(self.board.Zones())
+    
     def do_mounts_footprint(self, outline=0):
         # no: number of outer mount points
         # ni: number of inner shaft mount points
@@ -816,6 +848,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 self.board.Add(m)
 
         return 0
+    
     def do_mounts(self, outline=0, df=3):
         # no: number of outer mount points
         # ni: number of inner shaft mount points
@@ -865,7 +898,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 # polygon
                 # TODO:
                 return 0
-
+    
     def do_outline(self, r1, r2, outline=0, edges=6, rf=0):
 
         # r1: bore radius
@@ -978,6 +1011,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             return
         elif t1_arc or t2_arc:
             c = kla.line_arc_center(t1,t2,r,side)
+            #wx.LogError(f'dx {dx}, dy {dy}, c {c}, r {r}, dsc {dsc}, D {D}')
         else:
             c = kla.line_line_center(t1,t2,r)
             # trim point track1
@@ -1017,7 +1051,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             lv = kla.line_vec(l)
             m = c + np.dot(r, lv)
 
-        return p1, p2, m
+        return p1, p2, m, c
 
     ## borrowed from fillet_helper.py
     ## https://github.com/tywtyw2002/FilletEdge/blob/master/fillet_helper.py
