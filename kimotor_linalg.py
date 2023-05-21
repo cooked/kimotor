@@ -196,6 +196,8 @@ def circle_line_intersect(l, c,r, ref=1):
     x2 = (-b + math.sqrt(dsc)) / (2*a)
     p2 = np.array([x2, m*x2 + k, 0])
 
+    wx.LogError(f'dsc {dsc}, p1 {p1}, p2 {p2}')
+
     d1 = np.linalg.norm(p1-pref)
     d2 = np.linalg.norm(p2-pref)
 
@@ -330,7 +332,7 @@ def line_arc_center(t1, t2, f, side=1):
         rt = t1.GetRadius()
         r = rt - side*f
         
-        wx.LogError(f'o {o}, r {r}, get rad {rt}')
+        #wx.LogError(f'o {o}, r {r}, get rad {rt}')
 
         # offset line
         l = line_points(t2)
@@ -362,7 +364,7 @@ def line_arc_center(t1, t2, f, side=1):
         rt = t2.GetRadius()
         r = rt - side*f
 
-        wx.LogError(f'o {o}, r {r}, get rad {rt}')
+        #wx.LogError(f'o {o}, r {r}, get rad {rt}')
 
         c = circle_line_intersect(l, o, r, 1)
 

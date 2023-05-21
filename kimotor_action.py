@@ -148,7 +148,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # get gui values and fix units (mm converted to nm where needed)
         self.nl     = 2 # int(self.m_ctrlLayers.GetValue())
         self.poles  = 12 #int(self.m_ctrlPoles.GetValue())
-        self.loops  = 3 #int(self.m_ctrlLoops.GetValue())
+        self.loops  = 2 #int(self.m_ctrlLoops.GetValue())
 
         self.trk_w = int(self.m_ctrlTrackWidth.GetValue() * self.SCALE) # track width
         self.dr = self.trk_w * 2                                        # track distance
