@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version 3.10.1-253-g8e3463c9)
+## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -259,6 +259,24 @@ class KiMotorGUI ( wx.Frame ):
 
 
 		sbSizer1.Add( bSizer21, 1, wx.EXPAND, 5 )
+
+		bSizer214 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time14 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Coil Strategy:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.lbl_refresh_time14.Wrap( -1 )
+
+		bSizer214.Add( self.lbl_refresh_time14, 0, wx.ALL, 5 )
+
+
+		bSizer214.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		m_cbStrategyChoices = [ u"Parallel", u"Radial" ]
+		self.m_cbStrategy = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), m_cbStrategyChoices, 0 )
+		self.m_cbStrategy.SetSelection( 1 )
+		bSizer214.Add( self.m_cbStrategy, 0, wx.ALL, 5 )
+
+
+		sbSizer1.Add( bSizer214, 1, wx.EXPAND, 5 )
 
 		bSizer2121 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -580,6 +598,7 @@ class KiMotorGUI ( wx.Frame ):
 		# Connect Events
 		self.Bind( wx.EVT_CLOSE, self.on_close )
 		self.m_cbOutline.Bind( wx.EVT_TEXT, self.on_cb_outline )
+		self.m_cbStrategy.Bind( wx.EVT_TEXT, self.on_cb_outline )
 		self.m_cbPreset.Bind( wx.EVT_TEXT, self.on_cb_preset )
 		self.m_ctrlLayers.Bind( wx.EVT_SPINCTRLDOUBLE, self.on_nr_layers )
 		self.btn_load.Bind( wx.EVT_BUTTON, self.on_btn_load )
@@ -597,6 +616,7 @@ class KiMotorGUI ( wx.Frame ):
 
 	def on_cb_outline( self, event ):
 		event.Skip()
+
 
 	def on_cb_preset( self, event ):
 		event.Skip()

@@ -4,6 +4,7 @@
 import math
 import numpy as np
 from . import kimotor_linalg as kla
+import wx
 
 def parallel(r1,r2, dr,th,turns,dir):
         """ Compute layout points for coil with sides parallel to each other
@@ -39,6 +40,15 @@ def parallel(r1,r2, dr,th,turns,dir):
             # solve corners and order them
             pc1 = kla.circle_line_intersect(lr, c, r1+l*dr)
             pc1 = pc1[0:2]
+
+            # TODO: if radial solver
+            center = [0,0,0]
+            
+            
+
+            lr = [center, [pc1[0], pc1[1], 0]]
+            wx.LogError(f"{lr}")
+
             pc2 = kla.circle_line_intersect(lr, c, r2-l*dr)
             pc2 = pc2[0:2]
             pc3 = np.array([ pc2[0],-pc2[1] ])
