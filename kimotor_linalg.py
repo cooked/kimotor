@@ -186,7 +186,7 @@ def circle_line_intersect(l, c,r, ref=1):
 
     dsc = b**2 - 4*a*c
 
-    wx.LogError(f'l {l} - m {m}, k {k} -- xc {xc}, yc {yc}')
+    wx.LogError(f'm {m}, k {k}, xc {xc}, yc {yc}, a {a}, b {b}, c {c}, dsc {dsc}')
 
     # pick the intersect point closest to the selected reference
     # point (start or end) of the line
