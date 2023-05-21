@@ -147,20 +147,20 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         # get gui values and fix units (mm converted to nm where needed)
         self.nl     = 2 # int(self.m_ctrlLayers.GetValue())
-        self.poles  = 9 #int(self.m_ctrlPoles.GetValue())
-        self.loops  = 2 #int(self.m_ctrlLoops.GetValue())
+        self.poles  = 12 #int(self.m_ctrlPoles.GetValue())
+        self.loops  = 3 #int(self.m_ctrlLoops.GetValue())
 
         self.trk_w = int(self.m_ctrlTrackWidth.GetValue() * self.SCALE) # track width
         self.dr = self.trk_w * 2                                        # track distance
         
-        self.r_fill = int(1*self.SCALE) #int(self.m_ctrlRfill.GetValue() * self.SCALE)         # track fillet
+        self.r_fill = int(0.2*self.SCALE) #int(self.m_ctrlRfill.GetValue() * self.SCALE)         # track fillet
         self.o_fill = int(self.m_ctrlFilletRadius.GetValue() * self.SCALE)  # outline fillet
 
         self.ro = int(self.m_ctrlDout.GetValue() /2 * self.SCALE)
         self.w_mnt = int(self.m_ctrlWmnt.GetValue() * self.SCALE)
         self.w_trm = int(self.m_ctrlWtrm.GetValue() * self.SCALE)
 
-        self.ri = int(self.m_ctrlDin.GetValue() /2 * self.SCALE )
+        self.ri = int(30*self.SCALE) #int(self.m_ctrlDin.GetValue() /2 * self.SCALE )
         self.rb = int(self.m_ctrlDbore.GetValue() /2 * self.SCALE)
 
         self.mhon = int(self.m_mhOut.GetValue())
@@ -168,8 +168,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.mhin = int(self.m_mhIn.GetValue())
         self.mhir = int(self.m_mhInR.GetValue() /2 * self.SCALE)
 
-        self.d_via = int(0.4 * self.SCALE)   # min via size
-        self.d_drill = int(0.2 * self.SCALE)   # min drill size
+        self.d_via = int(0.04 * self.SCALE)   # min via size
+        self.d_drill = int(0.02 * self.SCALE)   # min drill size
 
         # init buttons state
         if self.group:
@@ -264,26 +264,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 self.board.Add(via)
                 self.group.AddItem(via)
 
-                via = pcbnew.PCB_VIA(self.board)
-                via.SetPosition( self.fpoint(int(fp1[0]),int(fp1[1])) )
-                via.SetDrill( self.d_drill )
-                via.SetWidth( self.d_drill )
-                self.board.Add(via)
-                self.group.AddItem(via)
 
-                via = pcbnew.PCB_VIA(self.board)
-                via.SetPosition( self.fpoint(int(fp2[0]),int(fp2[1])) )
-                via.SetDrill( self.d_drill )
-                via.SetWidth( self.d_drill )
-                self.board.Add(via)
-                self.group.AddItem(via)
-
-                via = pcbnew.PCB_VIA(self.board)
-                via.SetPosition( self.fpoint(int(fm[0]),int(fm[1])) )
-                via.SetDrill( self.d_drill )
-                via.SetWidth( self.d_drill )
-                self.board.Add(via)
-                self.group.AddItem(via)
 
                 # generate fillet track
                 f = pcbnew.PCB_ARC(self.board)
@@ -314,16 +295,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         ce = track0f.GetEnd()
 
         return [cs, ce]
-
-    # DEBUG/TEST of the fillet bug only
-    def test_fillet_bug(self):
-        
-        r1 = int(50 * self.SCALE)
-        r2 = int(100 * self.SCALE)
-        loops = 8
-
-        coil_t = self.do_coils(1, r1, r2, loops)
-
 
     def do_coils(self, ln, ri, ro, loops, mode=0):
         """ Generate the coil tracks (with fillet) over the given PCB layers
@@ -380,7 +351,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             coil_se = []
 
             # rotation matrix
-            th = th0 * p + math.radians(0.0001); # FIXME: tweak to make it not straight up vertical
+            th = th0 * p + math.radians(0.0001) # FIXME: tweak to make it not straight up vertical
             c = math.cos(th)
             s = math.sin(th)
             R = np.array( [[c, -s],[s, c]] )
@@ -1004,14 +975,35 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         t1_arc = t1.GetClass() == 'PCB_ARC'
         t2_arc = t2.GetClass() == 'PCB_ARC'
 
-        ## find center and trim points
-
+        ## find fillet center
         if t1_arc and t2_arc:
             # TODO: both arcs
             return
         elif t1_arc or t2_arc:
-            c = kla.line_arc_center(t1,t2,r,side)
-            #wx.LogError(f'dx {dx}, dy {dy}, c {c}, r {r}, dsc {dsc}, D {D}')
+            c, o, r1, rt = kla.line_arc_center(t1,t2,r,side)
+            #wx.LogError(f'c {c}, o {o}, r {r}')
+
+            # test, debug
+            
+
+            s = pcbnew.PCB_SHAPE(self.board)
+            #s.SetShape(pcbnew.SHAPE_T_SEGMENT)
+            #s.SetStart( self.fpoint(int(l[0][0]),int(l[0][1])))
+            #s.SetEnd( self.fpoint(int(l[1][0]),int(l[1][1])) )
+            s.SetShape(pcbnew.SHAPE_T_ARC)
+            s.SetStart( self.fpoint(int(0),int(rt)))
+            s.SetCenter( self.fpoint(int(o[0]),int(o[1])) )
+            s.SetArcAngleAndEnd(pcbnew.EDA_ANGLE(360, 1),False)
+            s.SetLayer(pcbnew.Edge_Cuts)
+            s.SetWidth(int(0.05 * self.SCALE))
+            self.board.Add(s)
+
+            via = pcbnew.PCB_VIA(self.board)
+            via.SetPosition( self.fpoint(int(o[0]),int(o[1])) )
+            via.SetDrill( self.d_drill )
+            via.SetWidth( self.d_drill )
+            self.board.Add(via)
+
         else:
             c = kla.line_line_center(t1,t2,r)
             # trim point track1
@@ -1021,7 +1013,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             l2 = kla.line_points(t2)
             p2 = kla.circle_line_tg( l2, c, r)
 
-
+        # find fillet trim points
         if t1_arc:
             # trim point track1 (arc)
             c1 = t1.GetCenter()

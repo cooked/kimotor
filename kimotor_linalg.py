@@ -325,17 +325,18 @@ def line_arc_center(t1, t2, f, side=1):
         v2n = np.cross( [0,0,s], v2u )
 
         # offset circle
-        o = t1.GetCenter()
-        o = np.array([o.x, o.y])
-        r = t1.GetRadius() - side*f
+        ot = t1.GetCenter()
+        o = np.array([ot.x, ot.y])
+        rt = t1.GetRadius()
+        r = rt - side*f
         
-        wx.LogError(f'v1 {v1}, v2 {v2}, o {o}, r {r}')
+        wx.LogError(f'o {o}, r {r}, get rad {rt}')
 
         # offset line
-        p2 = line_points(t2)
-        p2 = p2 + np.dot( f, v2n )
+        l = line_points(t2)
+        l = l + np.dot( f, v2n )
 
-        c = circle_line_intersect(p2, o, r, 0)
+        c = circle_line_intersect(l, o, r, 0)
 
     elif t2_arc:
         # solve unit vectors
@@ -352,19 +353,22 @@ def line_arc_center(t1, t2, f, side=1):
         v1n = np.cross( [0,0,s], v1u )
 
         # offset line
-        p1 = line_points(t1)
-        p1 = p1 + np.dot( f, v1n )
+        l = line_points(t1)
+        l = l + np.dot( f, v1n )
 
         # offset circle
-        o = t2.GetCenter()
-        o = np.array([o.x, o.y])
-        r = t2.GetRadius() - side*f
+        ot = t2.GetCenter()
+        o = np.array([ot.x, ot.y])
+        rt = t2.GetRadius()
+        r = rt - side*f
 
-        
+        wx.LogError(f'o {o}, r {r}, get rad {rt}')
 
-        c = circle_line_intersect(p1, o, r, 1)
+        c = circle_line_intersect(l, o, r, 1)
 
-    return c
+    #wx.LogError(f'c {c}, o {o}, r {r}')
+
+    return c, o, r, int(rt)
 
 # TODO: implement
 def arc_arc_center(t1, t2, f):
