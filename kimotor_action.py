@@ -92,7 +92,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.rot = (self.roc + (self.ro-self.w_mnt)) / 2
 
         # generate and connect coils
-        coil_t = self.do_coils(self.nl, self.ri, self.roc)
+        strategy = self.m_cbStrategy.GetSelection()
+        coil_t = self.do_coils(self.nl, self.ri, strategy, self.roc)
 
         drc = max(self.dr, self.d_via)
         ext_t, int_t = self.do_races(drc, self.roc, self.ri)
@@ -221,15 +222,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         # 1st coil point
         if layer != 0:
-            #mps = pcbnew.wxPoint( int(Tfvi[ivi][0,0]), int(Tfvi[ivi][0,1]) )
-            #ivi += 1
             cs = self.fpoint( int(Tfvi[ivi][0,0]), int(Tfvi[ivi][0,1]) )
             ivi += 1
             t = pcbnew.PCB_TRACK(self.board)
             t.SetWidth( self.trk_w )
             t.SetLayer( layer )
             t.SetStart( cs )
-            #t.SetMid( mps )
             t.SetEnd( self.fpoint( int(startf[0,0]), int(startf[0,1]) ) )
             self.board.Add(t)
             group.AddItem(t)
@@ -295,7 +293,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         return [cs, ce]
 
-    def do_coils(self, ln, ri, ro, mode=0):
+    def do_coils(self, ln, ri, ro, strategy, mode=0):
         """ Generate the coil tracks (with fillet) over the given PCB layers
 
         Args:
@@ -335,9 +333,15 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #w2 = 10 * 1e6 #ri * math.cos(th0/2 - dth)
 
         # coil (corners, mid-points)
+        #if strategy == 0:
         pcu0, pcu0m, pcu0mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
         pcu1, pcu1m, pcu1mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
+        #else:
+        #    pcu0, pcu0m, pcu0mi = ksolve.radial( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
+        #    pcu1, pcu1m, pcu1mi = ksolve.radial( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
 
+        
+        
         # coil terminals
         coil_t = []
         # poles

@@ -338,7 +338,7 @@ def line_arc_center(t1, t2, f, side=1):
     elif t2_arc:
         # solve unit vectors
         v1 = vec(t1)
-        v2 = tangent(t2)    # use the tg to the arc at its START point
+        v2 = tangent(t2, end=False)    # use the tg to the arc at its START point
 
         v1u = v1/np.linalg.norm(v1)
         v2u = v2/np.linalg.norm(v2)
