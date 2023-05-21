@@ -962,7 +962,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #     self.board.Add(c)
         return
 
-    def fillet(self, t1, t2, r, side=1):
+    def fillet(self, t1, t2, f, side=1):
         """ Generate fillet between two tracks
 
         Args:
@@ -980,8 +980,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             # TODO: both arcs
             return
         elif t1_arc or t2_arc:
-            c, o, r1, rt = kla.line_arc_center(t1,t2,r,side)
-            #wx.LogError(f'c {c}, o {o}, r {r}')
+            c, o, rr = kla.line_arc_center(t1,t2,f,side)
+            wx.LogError(f'o {o}, rr {rr}, c {c}')
 
             # test, debug
             
@@ -991,7 +991,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             #s.SetStart( self.fpoint(int(l[0][0]),int(l[0][1])))
             #s.SetEnd( self.fpoint(int(l[1][0]),int(l[1][1])) )
             s.SetShape(pcbnew.SHAPE_T_ARC)
-            s.SetStart( self.fpoint(int(0),int(rt)))
+            s.SetStart( self.fpoint(int(0),int(rr)))
             s.SetCenter( self.fpoint(int(o[0]),int(o[1])) )
             s.SetArcAngleAndEnd(pcbnew.EDA_ANGLE(360, 1),False)
             s.SetLayer(pcbnew.Edge_Cuts)
@@ -1005,13 +1005,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.board.Add(via)
 
         else:
-            c = kla.line_line_center(t1,t2,r)
+            c = kla.line_line_center(t1,t2,f)
             # trim point track1
             l1 = kla.line_points(t1)
-            p1 = kla.circle_line_tg( l1, c, r)
+            p1 = kla.circle_line_tg( l1, c, f)
             # trim point track2
             l2 = kla.line_points(t2)
-            p2 = kla.circle_line_tg( l2, c, r)
+            p2 = kla.circle_line_tg( l2, c, f)
 
         # find fillet trim points
         if t1_arc:
@@ -1019,29 +1019,29 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             c1 = t1.GetCenter()
             c1 = np.array([c1.x, c1.y])
             r1 = t1.GetRadius()
-            p1 = kla.circle_circle_tg(c,r,c1,r1)
+            p1 = kla.circle_circle_tg(c,f,c1,r1)
             # trim point track2 (line)
             l2 = kla.line_points(t2)
-            p2 = kla.circle_line_tg(l2,c,r)
+            p2 = kla.circle_line_tg(l2,c,f)
             # mid point
-            m = kla.circle_arc_mid(p1,p2,c,r)
+            m = kla.circle_arc_mid(p1,p2,c,f)
         elif t2_arc:
             # trim point track1 (line)
             l1 = kla.line_points(t1)
-            p1 = kla.circle_line_tg(l1,c,r)
+            p1 = kla.circle_line_tg(l1,c,f)
             # trim point track2 (arc)
             c2 = t2.GetCenter()
             c2 = np.array([c2.x, c2.y])
             r2 = t2.GetRadius()
-            p2 = kla.circle_circle_tg(c,r, c2, r2)
+            p2 = kla.circle_circle_tg(c,f, c2, r2)
             # mid point
-            m = kla.circle_arc_mid(p1,p2, c,r)
+            m = kla.circle_arc_mid(p1,p2, c,f)
         else:
             # arc mid-point
             t1e = t1.GetEnd()
             l = np.array([c, [t1e.x, t1e.y, 0]])
             lv = kla.line_vec(l)
-            m = c + np.dot(r, lv)
+            m = c + np.dot(f, lv)
 
         return p1, p2, m, c
 
