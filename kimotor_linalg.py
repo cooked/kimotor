@@ -175,24 +175,24 @@ def circle_line_intersect(l, c,r, ref=1):
     """
 
     # TODO: this fails for dx=0 (m=inf)
-    m,k = line(l)
+    m,b = line(l)
 
-    xc = c[0]
-    yc = c[1]
+    h = c[0]
+    k = c[1]
 
-    a = 1+m**2
-    b = 2 * (m*k - m*yc - xc)
-    cc = k**2 + xc**2 + yc**2 - r**2 - 2*k*yc
+    aa = 1 + m**2
+    bb = 2*m*b - 2*m*k - 2*h
+    cc = b**2 + h**2 + k**2 - r**2 - 2*b*k
 
-    dsc = b**2 - 4*a*cc
+    dsc = bb**2 - 4*aa*cc
 
     # pick the intersect point closest to the selected reference
     # point (start or end) of the line
     pref = np.array(l[ref])
-    x1 = (-b - math.sqrt(dsc)) / (2*a)
-    p1 = np.array([x1, m*x1 + k, 0])
-    x2 = (-b + math.sqrt(dsc)) / (2*a)
-    p2 = np.array([x2, m*x2 + k, 0])
+    x1 = (-bb - math.sqrt(dsc)) / (2*aa)
+    p1 = np.array([x1, m*x1 + b, 0])
+    x2 = (-bb + math.sqrt(dsc)) / (2*aa)
+    p2 = np.array([x2, m*x2 + b, 0])
 
     #wx.LogError(f'dsc {dsc}, p1 {p1}, p2 {p2}')
 
