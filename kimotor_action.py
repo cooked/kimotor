@@ -62,8 +62,15 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.fpoint_vector = pcbnew.VECTOR_VECTOR2I
 
         #TODO:
-        #self.init_persist() 
+        #self.init_persist()
+
         self.init_parameters()
+
+        # disable fillet on windows
+        if os.name == 'nt':
+            self.r_fill = 0
+            self.m_ctrlRfill.Disable()
+
         # init library paths and other config items
         self.init_config()
         self.init_nets()
