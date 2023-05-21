@@ -7,7 +7,7 @@ from . import kimotor_linalg as kla
 import wx
 
 def parallel(r1,r2, dr,th,turns,dir):
-        """ Compute layout points for coil with sides parallel to each other
+        """ Compute layout points for coil with sides always aligned to radius
 
         Args:
             r1 (int): coil inner radius
@@ -20,7 +20,7 @@ def parallel(r1,r2, dr,th,turns,dir):
         Returns:
             matrix, matrix, matrix: corners (excl. arc mids), outer arc mids, inner arc mids
         """
- 
+
         pts = []
         mds = []
         mdsi = []
@@ -30,25 +30,12 @@ def parallel(r1,r2, dr,th,turns,dir):
         l0 = np.array([ c, [r1*math.cos(th/2), r1*math.sin(th/2), 0] ])
         l0 = kla.line_offset(l0, -dr)
         
-        # FIXME: ba design. store 1/4 point (mid of half inner arc) as first item in the vertex list 
-        #pmi = np.array([ r1*math.cos(th/4), r1*math.sin(th/4) ])
-        #mdsi.extend([pmi])
-
         for l in range(turns):
             # offset line
             lr = kla.line_offset(l0, -l*dr)
             # solve corners and order them
             pc1 = kla.circle_line_intersect(lr, c, r1+l*dr)
             pc1 = pc1[0:2]
-
-            # TODO: if radial solver
-            center = [0,0,0]
-            
-            
-
-            lr = [center, [pc1[0], pc1[1], 0]]
-            wx.LogError(f"{lr}")
-
             pc2 = kla.circle_line_intersect(lr, c, r2-l*dr)
             pc2 = pc2[0:2]
             pc3 = np.array([ pc2[0],-pc2[1] ])
@@ -71,7 +58,7 @@ def parallel(r1,r2, dr,th,turns,dir):
         return pm, mm, mmi
 
 def radial(r1,r2, dr,th,turns,dir):
-        """ Compute layout points for coil with sides always aligned to radius
+        """ Compute layout points for coil with sides aligned to the local radial direction
 
         Args:
             r1 (int): coil inner radius
@@ -84,25 +71,27 @@ def radial(r1,r2, dr,th,turns,dir):
         Returns:
             matrix, matrix, matrix: corners (excl. arc mids), outer arc mids, inner arc mids
         """
-
-        # TODO: instead of offsetting (parallel to previous) we might want move to adj. radial
-            
-
+ 
         pts = []
         mds = []
         mdsi = []
 
-        # points 
+        # center
         c = [0,0,0]
-        l0 = np.array([ c, [r1*math.cos(th/2), r1*math.sin(th/2), 0] ])
-        l0 = kla.line_offset(l0, -dr)
         
+        # first line
+        l0 = np.array([ c, [r1*math.cos(th/2), r1*math.sin(th/2), 0] ])
+
         for l in range(turns):
-            # offset line
-            lr = kla.line_offset(l0, -l*dr)
+            # offset previous line
+            lr = kla.line_offset(l0, -dr)
+            
             # solve corners and order them
             pc1 = kla.circle_line_intersect(lr, c, r1+l*dr)
             pc1 = pc1[0:2]
+
+            lr = [c, [pc1[0], pc1[1], 0]]
+
             pc2 = kla.circle_line_intersect(lr, c, r2-l*dr)
             pc2 = pc2[0:2]
             pc3 = np.array([ pc2[0],-pc2[1] ])
@@ -117,6 +106,9 @@ def radial(r1,r2, dr,th,turns,dir):
             pmi = np.array([ r1+l*dr, 0 ])
             mds.extend([pm])
             mdsi.extend([pmi])
+
+            #
+            l0 = [ [pc1[0], pc1[1], 0], [pc2[0], pc2[1], 0] ] 
 
         pm = np.matrix(pts)     # points, excl. arc mids
         mm = np.matrix(mds)     # arc (outer) mids only

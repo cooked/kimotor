@@ -93,7 +93,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         # generate and connect coils
         strategy = self.m_cbStrategy.GetSelection()
-        coil_t = self.do_coils(self.nl, self.ri, strategy, self.roc)
+        coil_t = self.do_coils(self.nl, self.ri, self.roc, strategy)
 
         drc = max(self.dr, self.d_via)
         ext_t, int_t = self.do_races(drc, self.roc, self.ri)
@@ -293,7 +293,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         return [cs, ce]
 
-    def do_coils(self, ln, ri, ro, strategy, mode=0):
+    def do_coils(self, ln, ri, ro, mode=0):
         """ Generate the coil tracks (with fillet) over the given PCB layers
 
         Args:
@@ -324,7 +324,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             wx.LogWarning('Coil inner side and shaft bore are too close. Must be D_in > 1.5*D_bore')
             return
 
-
         th0 = math.radians(360/self.poles)
 
         # limit coil base width (assume 1deg gap between coils base)
@@ -333,14 +332,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #w2 = 10 * 1e6 #ri * math.cos(th0/2 - dth)
 
         # coil (corners, mid-points)
-        #if strategy == 0:
-        pcu0, pcu0m, pcu0mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
-        pcu1, pcu1m, pcu1mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
-        #else:
-        #    pcu0, pcu0m, pcu0mi = ksolve.radial( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
-        #    pcu1, pcu1m, pcu1mi = ksolve.radial( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
+        if mode == 0:
+            pcu0, pcu0m, pcu0mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
+            pcu1, pcu1m, pcu1mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
 
-        
+        else:
+            pcu0, pcu0m, pcu0mi = ksolve.radial( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
+            pcu1, pcu1m, pcu1mi = ksolve.radial( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
         
         # coil terminals
         coil_t = []
