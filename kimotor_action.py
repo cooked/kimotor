@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 import wx
-#import wx.lib.agw.persist as PM
+import wx.lib.agw.persist.persistencemanager as PM
 import pcbnew
 import os
 import numpy as np
@@ -16,6 +16,7 @@ else:
     from . import kimotor_gui
     from . import kimotor_linalg as kla
     from . import kimotor_solver as ksolve
+    from . import kimotor_persist as kpers
 
 class KiMotor(pcbnew.ActionPlugin):
     def defaults(self):
@@ -61,8 +62,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.fpoint = pcbnew.VECTOR2I
             self.fpoint_vector = pcbnew.VECTOR_VECTOR2I
 
-        #TODO:
-        #self.init_persist()
+        # kick-off persistence
+        pf = os.path.join(
+            pcbnew.SETTINGS_MANAGER.GetUserSettingsPath(),
+            "kimotor.cfg"
+        )
+
+        self.init_persist(pf)
 
         self.init_parameters()
 
@@ -121,6 +127,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.lbl_phaseLength.SetLabel( '%.2f' % self.tl )
         self.lbl_phaseR.SetLabel( '%.2f' % self.tr )
 
+
     # initializers
     def init_config(self):
 
@@ -145,6 +152,11 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # no library found
         if self.fp_path is None:
             wx.LogError("Footprint library not found - Make sure the KiCad paths are properly configured.")
+
+    def init_persist(self, configFile):
+        self.pm = PM.PersistenceManager.Get()
+        self.pm.SetPersistenceFile(configFile)
+        self.pm.RegisterAndRestoreAll(self)
 
     def init_nets(self):
         # init paths
@@ -600,6 +612,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.group.AddItem(conn)
 
      # run the thermal zones task
+    
     def do_thermal(self, outline=0, nvias=36):
         # see refill:
         # https://forum.kicad.info/t/python-scripting-refill-all-zones/35834
@@ -1183,7 +1196,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
     # event handlers (buttons)
     def on_close(self, event):
-        #self._persistMgr.SaveAndUnregister()
+        self.pm.SaveAndUnregister()
         event.Skip()
 
     def on_btn_clear(self, event):
@@ -1202,39 +1215,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #self.logger.info("Generate stator coils")
         self.generate()
         event.Skip()
-
-    # https://docs.wxpython.org/wx.FileDialog.html
-    def on_btn_load(self, event):
-        #if self.contentNotSaved:
-        #    if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm",
-        #                    wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO:
-        #        return
-        # otherwise ask the user what new file to open
-        with wx.FileDialog(self, "Open XYZ file", wildcard="XYZ files (*.xyz)|*.xyz",
-                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
-            if fileDialog.ShowModal() == wx.ID_CANCEL:
-                return
-            # Proceed loading the file chosen by the user
-            pathname = fileDialog.GetPath()
-            try:
-                with open(pathname, 'r') as file:
-                    self.import_json(file)
-            except IOError:
-                wx.LogError("Cannot open file '%s'." % pathname)
-
-    def on_btn_save(self, event):
-        with wx.FileDialog(self, "Save XYZ file", wildcard="XYZ files (*.xyz)|*.xyz",
-                       style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
-            if fileDialog.ShowModal() == wx.ID_CANCEL:
-                return
-            # save the current contents in the file
-            pathname = fileDialog.GetPath()
-            try:
-                with open(pathname, 'w') as file:
-                    self.export_json(file)
-            except IOError:
-                wx.LogError("Cannot save current data in file '%s'." % pathname)
-
 
     def on_cb_preset(self, event):
         preset = self.m_cbPreset.GetSelection()
