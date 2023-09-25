@@ -1,13 +1,15 @@
 # Copyright 2022 Stefano Cottafavi <stefano.cottafavi@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-import wx
-import wx.lib.agw.persist.persistencemanager as PM
-import pcbnew
 import os
+import shutil
 import numpy as np
 import math
 import json
+
+import wx
+import wx.lib.agw.persist.persistencemanager as PM
+import pcbnew
 
 if __name__ == '__main__':
     import kimotor_gui
@@ -63,12 +65,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.fpoint_vector = pcbnew.VECTOR_VECTOR2I
 
         # kick-off persistence
-        pf = os.path.join(
+        self.pf = os.path.join(
             pcbnew.SETTINGS_MANAGER.GetUserSettingsPath(),
             "kimotor.cfg"
         )
 
-        self.init_persist(pf)
+        self.init_persist(self.pf)
 
         self.init_parameters()
 
@@ -1184,16 +1186,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         return rt
 
 
-    # file utils
-    def import_json(self, file):
-        # TODO:
-        return 0
-
-    def export_json(self, file):
-        # TODO:
-        return 0
-
-
     # event handlers (buttons)
     def on_close(self, event):
         self.pm.SaveAndUnregister()
@@ -1215,6 +1207,47 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #self.logger.info("Generate stator coils")
         self.generate()
         event.Skip()
+
+
+    # https://docs.wxpython.org/wx.FileDialog.html
+    def on_btn_save(self, event):
+        # persist first
+        self.pm.SaveAndUnregister()
+        self.pm.RegisterAndRestoreAll(self)
+        # file dialog
+        with wx.FileDialog(self, "Save KiMotor preset", wildcard="KMT files (*.kmt)|*.kmt",
+                       style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+            fileDialog.SetFilename("kimotor.kmt")
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return   
+            # copy and rename the persist file
+            try:
+                origin = self.pf
+                target = fileDialog.GetPath()
+                shutil.copyfile(origin, target)
+            except IOError:
+                wx.LogError("Cannot save current data in file '%s'." % target)
+
+    def on_btn_load(self, event):
+        with wx.FileDialog(self, "Load KiMotor preset", wildcard="KMT files (*.kmt)|*.kmt",
+                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+            try:
+                origin = fileDialog.GetPath()
+                target = self.pf
+                tmp = fileDialog.GetDirectory() + "/kimotor.tmp"
+                
+                self.pm.SetPersistenceFile(tmp)
+                self.pm.SaveAndUnregister()
+                shutil.copyfile(origin, target)
+                self.pm.SetPersistenceFile(target)
+                self.pm.RegisterAndRestoreAll(self)
+                os.remove(tmp)
+                
+            except IOError:
+                wx.LogError("Cannot open file '%s'." % origin)
+
 
     def on_cb_preset(self, event):
         preset = self.m_cbPreset.GetSelection()
