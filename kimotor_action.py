@@ -1243,7 +1243,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 shutil.copyfile(origin, target)
                 self.pm.SetPersistenceFile(target)
                 self.pm.RegisterAndRestoreAll(self)
-                os.remove(tmp)
+                #os.remove(tmp)
                 
             except IOError:
                 wx.LogError("Cannot open file '%s'." % origin)
