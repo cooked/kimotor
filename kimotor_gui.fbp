@@ -418,11 +418,11 @@
                                                 <property name="id">wxID_ANY</property>
                                                 <property name="inc">1</property>
                                                 <property name="initial">100</property>
-                                                <property name="max">1000</property>
+                                                <property name="max">9999</property>
                                                 <property name="max_size"></property>
                                                 <property name="maximize_button">0</property>
                                                 <property name="maximum_size"></property>
-                                                <property name="min">10</property>
+                                                <property name="min">1</property>
                                                 <property name="min_size"></property>
                                                 <property name="minimize_button">0</property>
                                                 <property name="minimum_size"></property>
@@ -437,7 +437,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
@@ -576,7 +576,7 @@
                                                 <property name="style"></property>
                                                 <property name="subclass"></property>
                                                 <property name="toolbar_pane">0</property>
-                                                <property name="tooltip">Width of the mounting ring (exposed copper annular))</property>
+                                                <property name="tooltip">Width of the exposed copper annular at the PCB outer edge</property>
                                                 <property name="window_extra_style"></property>
                                                 <property name="window_name">lbl_refresh_time212</property>
                                                 <property name="window_style"></property>
@@ -689,7 +689,7 @@
                                                 <property name="id">wxID_ANY</property>
                                                 <property name="inc">0.1</property>
                                                 <property name="initial">5</property>
-                                                <property name="max">50</property>
+                                                <property name="max">9999</property>
                                                 <property name="max_size"></property>
                                                 <property name="maximize_button">0</property>
                                                 <property name="maximum_size"></property>
@@ -708,7 +708,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
@@ -847,7 +847,7 @@
                                                 <property name="style"></property>
                                                 <property name="subclass"></property>
                                                 <property name="toolbar_pane">0</property>
-                                                <property name="tooltip">Width of the mounting ring (exposed copper annular))</property>
+                                                <property name="tooltip"></property>
                                                 <property name="window_extra_style"></property>
                                                 <property name="window_name">lbl_refresh_time2121</property>
                                                 <property name="window_style"></property>
@@ -960,7 +960,7 @@
                                                 <property name="id">wxID_ANY</property>
                                                 <property name="inc">0.1</property>
                                                 <property name="initial">4</property>
-                                                <property name="max">50</property>
+                                                <property name="max">9999</property>
                                                 <property name="max_size"></property>
                                                 <property name="maximize_button">0</property>
                                                 <property name="maximum_size"></property>
@@ -979,7 +979,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
@@ -1167,11 +1167,11 @@
                                                 <property name="id">wxID_ANY</property>
                                                 <property name="inc">1</property>
                                                 <property name="initial">30.000000</property>
-                                                <property name="max">1000</property>
+                                                <property name="max">9999</property>
                                                 <property name="max_size"></property>
                                                 <property name="maximize_button">0</property>
                                                 <property name="maximum_size"></property>
-                                                <property name="min">10</property>
+                                                <property name="min">1</property>
                                                 <property name="min_size"></property>
                                                 <property name="minimize_button">0</property>
                                                 <property name="minimum_size"></property>
@@ -1186,7 +1186,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
@@ -1374,11 +1374,11 @@
                                                 <property name="id">wxID_ANY</property>
                                                 <property name="inc">1</property>
                                                 <property name="initial">10</property>
-                                                <property name="max">1000</property>
+                                                <property name="max">9999</property>
                                                 <property name="max_size"></property>
                                                 <property name="maximize_button">0</property>
                                                 <property name="maximum_size"></property>
-                                                <property name="min">10</property>
+                                                <property name="min">0</property>
                                                 <property name="min_size"></property>
                                                 <property name="minimize_button">0</property>
                                                 <property name="minimum_size"></property>
@@ -1393,7 +1393,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
@@ -1568,7 +1568,7 @@
                                                 <property name="context_help"></property>
                                                 <property name="context_menu">1</property>
                                                 <property name="default_pane">0</property>
-                                                <property name="digits">1</property>
+                                                <property name="digits">2</property>
                                                 <property name="dock">Dock</property>
                                                 <property name="dock_fixed">0</property>
                                                 <property name="docking">Left</property>
@@ -1600,7 +1600,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
@@ -1677,7 +1677,7 @@
                                     <property name="border">5</property>
                                     <property name="flag">wxEXPAND</property>
                                     <property name="proportion">1</property>
-                                    <object class="wxBoxSizer" expanded="1">
+                                    <object class="wxBoxSizer" expanded="0">
                                         <property name="minimum_size">-1,-1</property>
                                         <property name="name">bSizer213</property>
                                         <property name="orient">wxHORIZONTAL</property>
@@ -1932,7 +1932,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
@@ -2058,7 +2058,7 @@
                                                 <property name="hidden">0</property>
                                                 <property name="id">wxID_ANY</property>
                                                 <property name="inc">1</property>
-                                                <property name="initial">0</property>
+                                                <property name="initial">0.000000</property>
                                                 <property name="max">36</property>
                                                 <property name="max_size"></property>
                                                 <property name="maximize_button">0</property>
@@ -2203,7 +2203,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
@@ -2499,7 +2499,7 @@
                                                 <property name="hidden">0</property>
                                                 <property name="id">wxID_ANY</property>
                                                 <property name="inc">1</property>
-                                                <property name="initial">40</property>
+                                                <property name="initial">20.000000</property>
                                                 <property name="max">999</property>
                                                 <property name="max_size"></property>
                                                 <property name="maximize_button">0</property>
@@ -3169,7 +3169,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
@@ -3344,7 +3344,7 @@
                                                 <property name="context_help"></property>
                                                 <property name="context_menu">1</property>
                                                 <property name="default_pane">0</property>
-                                                <property name="digits">2</property>
+                                                <property name="digits">3</property>
                                                 <property name="dock">Dock</property>
                                                 <property name="dock_fixed">0</property>
                                                 <property name="docking">Left</property>
@@ -3376,7 +3376,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip">Radius used to smooth the coil corners</property>
@@ -3617,7 +3617,7 @@
                                                 <property name="resize">Resizable</property>
                                                 <property name="show">1</property>
                                                 <property name="size">150,20</property>
-                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS</property>
+                                                <property name="style">wxALIGN_CENTER_HORIZONTAL|wxALIGN_RIGHT|wxSP_ARROW_KEYS</property>
                                                 <property name="subclass">SpinCtrlDoublePersist; .kimotor_persist; forward_declare</property>
                                                 <property name="toolbar_pane">0</property>
                                                 <property name="tooltip"></property>
