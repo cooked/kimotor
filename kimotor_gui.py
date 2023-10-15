@@ -27,9 +27,6 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer5 = wx.BoxSizer( wx.VERTICAL )
 
-
-		bSizer5.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-
 		sbSizer2 = wx.StaticBoxSizer( wx.StaticBox( self, wx.ID_ANY, u"Mechanical" ), wx.VERTICAL )
 
 		bSizer21211 = wx.BoxSizer( wx.HORIZONTAL )
@@ -45,7 +42,7 @@ class KiMotorGUI ( wx.Frame ):
 		bSizer21211.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
 		m_cbOutlineChoices = [ u"Circle", u"Square", u"Polygon" ]
-		self.m_cbOutline = wx.ComboBox( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Circle", wx.DefaultPosition, wx.Size( 150,20 ), m_cbOutlineChoices, 0, wx.DefaultValidator, u"m_cbOutline" )
+		self.m_cbOutline = wx.ComboBox( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Circle", wx.DefaultPosition, wx.Size( 150,20 ), m_cbOutlineChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbOutline" )
 		self.m_cbOutline.SetSelection( 0 )
 		bSizer21211.Add( self.m_cbOutline, 0, wx.ALL, 5 )
 
@@ -155,7 +152,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer22.Add( self.lbl_refresh_time1143, 0, wx.ALL, 5 )
 
-		self.m_ctrlDin = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 1, 9999, 30.000000, 1, u"m_ctrlDin" )
+		self.m_ctrlDin = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 1, 9999, 26.000000, 1, u"m_ctrlDin" )
 		self.m_ctrlDin.SetDigits( 2 )
 		bSizer22.Add( self.m_ctrlDin, 0, wx.ALL, 5 )
 
@@ -203,17 +200,35 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer22112.Add( self.lbl_refresh_time11441, 0, wx.ALL, 5 )
 
-		self.m_ctrlFilletRadius = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 0, 1000, 3, 0.1, u"m_ctrlFilletRadius" )
+		self.m_ctrlFilletRadius = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 0, 1000, 3.100000, 0.1, u"m_ctrlFilletRadius" )
 		self.m_ctrlFilletRadius.SetDigits( 2 )
 		bSizer22112.Add( self.m_ctrlFilletRadius, 0, wx.ALL, 5 )
 
 
 		sbSizer2.Add( bSizer22112, 1, wx.EXPAND, 5 )
 
+		bSizer27 = wx.BoxSizer( wx.HORIZONTAL )
+
 		self.lbl_refresh_time13112 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Mounting holes:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1311" )
 		self.lbl_refresh_time13112.Wrap( -1 )
 
-		sbSizer2.Add( self.lbl_refresh_time13112, 0, wx.ALL, 5 )
+		bSizer27.Add( self.lbl_refresh_time13112, 0, wx.ALL, 5 )
+
+
+		bSizer27.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.lbl_refresh_time131121 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"size", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1311" )
+		self.lbl_refresh_time131121.Wrap( -1 )
+
+		bSizer27.Add( self.lbl_refresh_time131121, 0, wx.ALL, 5 )
+
+		m_cbMountSizeChoices = [ u"None", u"M2", u"M2.5", u"M3", u"M3.5", u"M4", u"M5", u"M6", u"M8" ]
+		self.m_cbMountSize = wx.ComboBox( sbSizer2.GetStaticBox(), wx.ID_ANY, u"M3", wx.DefaultPosition, wx.Size( 150,20 ), m_cbMountSizeChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbMH" )
+		self.m_cbMountSize.SetSelection( 0 )
+		bSizer27.Add( self.m_cbMountSize, 0, wx.ALL, 5 )
+
+
+		sbSizer2.Add( bSizer27, 1, wx.EXPAND, 5 )
 
 		bSizer213 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -270,16 +285,33 @@ class KiMotorGUI ( wx.Frame ):
 		sbSizer2.Add( bSizer2111, 1, wx.EXPAND, 5 )
 
 
-		bSizer5.Add( sbSizer2, 1, wx.EXPAND, 5 )
-
-
-		bSizer5.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+		bSizer5.Add( sbSizer2, 1, wx.EXPAND|wx.TOP, 8 )
 
 		sbSizer1 = wx.StaticBoxSizer( wx.StaticBox( self, wx.ID_ANY, u"Electrical" ), wx.VERTICAL )
 
+		bSizer23 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time3 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Motor Connections:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time" )
+		self.lbl_refresh_time3.Wrap( -1 )
+
+		self.lbl_refresh_time3.SetToolTip( u"1P: coils wired for 1-phase motor supply (2 terminals)\n3P: coils wired for 3-phase motor supply (3 terminals)\n3P+N: coils wired for 3-phase + neutral exposed (4 terminals)" )
+
+		bSizer23.Add( self.lbl_refresh_time3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+
+		bSizer23.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		m_cbSchemeChoices = [ u"1P", u"3P", u"3P+N" ]
+		self.m_cbScheme = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, u"3P", wx.DefaultPosition, wx.Size( 150,20 ), m_cbSchemeChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbConnections" )
+		self.m_cbScheme.SetSelection( 1 )
+		bSizer23.Add( self.m_cbScheme, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
+
+
+		sbSizer1.Add( bSizer23, 1, wx.EXPAND, 5 )
+
 		bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.lbl_refresh_time = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Motor poles:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time" )
+		self.lbl_refresh_time = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Motor Slots:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time" )
 		self.lbl_refresh_time.Wrap( -1 )
 
 		bSizer2.Add( self.lbl_refresh_time, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
@@ -287,9 +319,9 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer2.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlPoles = SpinCtrlDoublePersist( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 3, 60, 6, 3, u"m_ctrlPoles" )
-		self.m_ctrlPoles.SetDigits( 0 )
-		bSizer2.Add( self.m_ctrlPoles, 0, wx.ALL, 5 )
+		self.m_ctrlSlots = SpinCtrlDoublePersist( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 6, 60, 6.000000, 3, u"m_ctrlPoles" )
+		self.m_ctrlSlots.SetDigits( 0 )
+		bSizer2.Add( self.m_ctrlSlots, 0, wx.ALL, 5 )
 
 
 		sbSizer1.Add( bSizer2, 0, wx.EXPAND, 5 )
@@ -304,7 +336,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer21.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlLoops = SpinCtrlDoublePersist( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 1, 999, 20.000000, 1, u"m_ctrlLoops" )
+		self.m_ctrlLoops = SpinCtrlDoublePersist( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 1, 999, 12.000000, 1, u"m_ctrlLoops" )
 		self.m_ctrlLoops.SetDigits( 0 )
 		bSizer21.Add( self.m_ctrlLoops, 0, wx.ALL, 5 )
 
@@ -313,7 +345,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer214 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.lbl_refresh_time14 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Coil Strategy:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time14" )
+		self.lbl_refresh_time14 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Coil style:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time14" )
 		self.lbl_refresh_time14.Wrap( -1 )
 
 		bSizer214.Add( self.lbl_refresh_time14, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
@@ -385,7 +417,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer211.Add( self.lbl_refresh_time112, 0, wx.ALL, 5 )
 
-		self.m_ctrlTrackWidth = SpinCtrlDoublePersist( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 0.127, 10, 0.127, 0.001, u"m_ctrlTrackWidth" )
+		self.m_ctrlTrackWidth = SpinCtrlDoublePersist( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 0.127, 10, 0.134000, 0.001, u"m_ctrlTrackWidth" )
 		self.m_ctrlTrackWidth.SetDigits( 3 )
 		bSizer211.Add( self.m_ctrlTrackWidth, 0, wx.ALL, 5 )
 
@@ -418,14 +450,36 @@ class KiMotorGUI ( wx.Frame ):
 
 		sbSizer1.Add( bSizer22111, 1, wx.EXPAND, 5 )
 
+		bSizer271 = wx.BoxSizer( wx.HORIZONTAL )
 
-		bSizer5.Add( sbSizer1, 1, wx.EXPAND, 5 )
+		self.lbl_refresh_time131122 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Terminal pads:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1311" )
+		self.lbl_refresh_time131122.Wrap( -1 )
+
+		bSizer271.Add( self.lbl_refresh_time131122, 0, wx.ALL, 5 )
 
 
-		bSizer5.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+		bSizer271.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		m_cbTPChoices = [ u"THT", u"SMD" ]
+		self.m_cbTP = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, u"THT", wx.DefaultPosition, wx.Size( 90,20 ), m_cbTPChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbTP" )
+		self.m_cbTP.SetSelection( 0 )
+		bSizer271.Add( self.m_cbTP, 0, wx.ALL, 5 )
+
+		self.lbl_refresh_time1311221 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"[mm2]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1311" )
+		self.lbl_refresh_time1311221.Wrap( -1 )
+
+		bSizer271.Add( self.lbl_refresh_time1311221, 0, wx.ALL, 5 )
+
+		m_termSizeChoices = [ u"0.1", u"0.15", u"0.25", u"0.5", u"0.75", u"1.0", u"1.5", u"2.0", u"2.5" ]
+		self.m_termSize = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, u"0.1", wx.DefaultPosition, wx.Size( 150,20 ), m_termSizeChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbTPSize" )
+		self.m_termSize.SetSelection( 1 )
+		bSizer271.Add( self.m_termSize, 0, wx.ALL, 5 )
 
 
-		bSizer5.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+		sbSizer1.Add( bSizer271, 1, wx.EXPAND, 5 )
+
+
+		bSizer5.Add( sbSizer1, 1, wx.EXPAND|wx.TOP, 8 )
 
 		sbSizer111 = wx.StaticBoxSizer( wx.StaticBox( self, wx.ID_ANY, u"Physics / Stats" ), wx.VERTICAL )
 
@@ -525,7 +579,10 @@ class KiMotorGUI ( wx.Frame ):
 		sbSizer111.Add( bSizer2132, 1, wx.EXPAND, 5 )
 
 
-		bSizer5.Add( sbSizer111, 1, wx.EXPAND, 5 )
+		bSizer5.Add( sbSizer111, 1, wx.EXPAND|wx.TOP, 8 )
+
+
+		bSizer5.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
 		bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -562,9 +619,13 @@ class KiMotorGUI ( wx.Frame ):
 		# Connect Events
 		self.Bind( wx.EVT_CLOSE, self.on_close )
 		self.m_cbOutline.Bind( wx.EVT_TEXT, self.on_cb_outline )
+		self.m_cbMountSize.Bind( wx.EVT_TEXT, self.on_cb_mholes )
+		self.m_cbScheme.Bind( wx.EVT_TEXT, self.on_cb_connections )
 		self.m_cbStrategy.Bind( wx.EVT_TEXT, self.on_cb_outline )
 		self.m_cbPreset.Bind( wx.EVT_TEXT, self.on_cb_preset )
 		self.m_ctrlLayers.Bind( wx.EVT_SPINCTRLDOUBLE, self.on_nr_layers )
+		self.m_cbTP.Bind( wx.EVT_TEXT, self.on_cb_trmtype )
+		self.m_termSize.Bind( wx.EVT_TEXT, self.on_cb_connections )
 		self.btn_load.Bind( wx.EVT_BUTTON, self.on_btn_load )
 		self.btn_save.Bind( wx.EVT_BUTTON, self.on_btn_save )
 		self.btn_clear.Bind( wx.EVT_BUTTON, self.on_btn_clear )
@@ -581,12 +642,22 @@ class KiMotorGUI ( wx.Frame ):
 	def on_cb_outline( self, event ):
 		event.Skip()
 
+	def on_cb_mholes( self, event ):
+		event.Skip()
+
+	def on_cb_connections( self, event ):
+		event.Skip()
+
 
 	def on_cb_preset( self, event ):
 		event.Skip()
 
 	def on_nr_layers( self, event ):
 		event.Skip()
+
+	def on_cb_trmtype( self, event ):
+		event.Skip()
+
 
 	def on_btn_load( self, event ):
 		event.Skip()

@@ -30,13 +30,13 @@ def parallel(r1,r2, dr,th,turns,dir):
         l0 = np.array([ c, [r1*math.cos(th/2), r1*math.sin(th/2), 0] ])
         l0 = kla.line_offset(l0, -dr)
         
-        for l in range(turns):
+        for turn in range(turns):
             # offset line
-            lr = kla.line_offset(l0, -l*dr)
+            lr = kla.line_offset(l0, -turn*dr)
             # solve corners and order them
-            pc1 = kla.circle_line_intersect(lr, c, r1+l*dr)
+            pc1 = kla.circle_line_intersect(lr, c, r1+turn*dr)
             pc1 = pc1[0:2]
-            pc2 = kla.circle_line_intersect(lr, c, r2-l*dr)
+            pc2 = kla.circle_line_intersect(lr, c, r2-turn*dr)
             pc2 = pc2[0:2]
             pc3 = np.array([ pc2[0],-pc2[1] ])
             pc4 = np.array([ pc1[0],-pc1[1] ])
@@ -46,8 +46,8 @@ def parallel(r1,r2, dr,th,turns,dir):
                 pts.extend([pc4, pc3, pc2, pc1])
             
             # solve outer and inner mid-points
-            pm = np.array([ r2-l*dr, 0 ])
-            pmi = np.array([ r1+l*dr, 0 ])
+            pm = np.array([ r2-turn*dr, 0 ])
+            pmi = np.array([ r1+turn*dr, 0 ])
             mds.extend([pm])
             mdsi.extend([pmi])
 
@@ -57,7 +57,71 @@ def parallel(r1,r2, dr,th,turns,dir):
 
         return pm, mm, mmi
 
-def radial(r1,r2, dr,th,turns,dir):
+def radial(ri,ro, dr,th,turns,dir):
+        """ Compute layout points for coil with sides aligned to the local radial direction
+
+        Args:
+            ri (int): coil inner radius
+            ro (int): coil outer radius
+            dr (int): spacing between coil loops (and also adj. coils)
+            th (float): coil trapezoid angle 
+            turns (int): number of coil loops (windings)
+            dir (int): coil direction, from larger to smaller loop (0:CW normal, 1:CCW rverse)
+
+        Returns:
+            matrix, matrix, matrix: corners (excl. arc mids), outer arc mids, inner arc mids
+        """
+ 
+        pts = []
+
+        # center
+        c = [0,0,0]
+        
+        # first line
+        l0 = np.array([ c, [ri*math.cos(th/2), ri*math.sin(th/2), 0] ])
+        lmp = np.array([ c, [ri*math.cos(th/4), ri*math.sin(th/4), 0] ])
+        lmn = np.array([ c, [ri*math.cos(th/4), -ri*math.sin(th/4), 0] ])
+
+        for turn in range(turns):
+            
+            # solve corner points
+            
+            lr = kla.line_offset(l0, -dr)
+            pc1 = kla.circle_line_intersect(lr, c, ri+turn*dr)
+            pc1 = pc1[0:2]
+
+            lr = [c, [pc1[0], pc1[1], 0]]
+            pc2 = kla.circle_line_intersect(lr, c, ro-turn*dr)
+            pc2 = pc2[0:2]
+            pc3 = np.array([ pc2[0],-pc2[1] ])
+            pc4 = np.array([ pc1[0],-pc1[1] ])
+            
+            # solve outer/inner mid-points
+            pmo = np.array([ ro-turn*dr, 0 ])
+            pmi = np.array([ ri+turn*dr, 0 ])
+
+            # order points
+            if dir == 0:
+                if turn == 0:
+                    tp = kla.circle_line_intersect(lmp, c, ri)
+                    pts.extend([pmi, tp[0:2], pc1, pc2, pmo, pc3])
+                else:
+                    pts.extend([pc4, pmi, pc1, pc2, pmo, pc3])
+            else:
+                if turn == 0:
+                    tp = kla.circle_line_intersect(lmn, c, ri)
+                    pts.extend([pmi, tp[0:2], pc4, pc3, pmo, pc2])
+                else:
+                    pts.extend([pc1, pmi, pc4, pc3, pmo, pc2])
+            
+            # move to the next radial
+            l0 = [ [pc1[0], pc1[1], 0], [pc2[0], pc2[1], 0] ] 
+
+        mpt = np.matrix(pts)
+
+        return mpt
+
+def radial_old(r1,r2, dr,th,turns,dir):
         """ Compute layout points for coil with sides aligned to the local radial direction
 
         Args:
@@ -82,17 +146,17 @@ def radial(r1,r2, dr,th,turns,dir):
         # first line
         l0 = np.array([ c, [r1*math.cos(th/2), r1*math.sin(th/2), 0] ])
 
-        for l in range(turns):
+        for turn in range(turns):
             # offset previous line
             lr = kla.line_offset(l0, -dr)
             
             # solve corners and order them
-            pc1 = kla.circle_line_intersect(lr, c, r1+l*dr)
+            pc1 = kla.circle_line_intersect(lr, c, r1+turn*dr)
             pc1 = pc1[0:2]
 
             lr = [c, [pc1[0], pc1[1], 0]]
 
-            pc2 = kla.circle_line_intersect(lr, c, r2-l*dr)
+            pc2 = kla.circle_line_intersect(lr, c, r2-turn*dr)
             pc2 = pc2[0:2]
             pc3 = np.array([ pc2[0],-pc2[1] ])
             pc4 = np.array([ pc1[0],-pc1[1] ])
@@ -102,8 +166,8 @@ def radial(r1,r2, dr,th,turns,dir):
                 pts.extend([pc4, pc3, pc2, pc1])
             
             # solve outer and inner mid-points
-            pm = np.array([ r2-l*dr, 0 ])
-            pmi = np.array([ r1+l*dr, 0 ])
+            pm = np.array([ r2-turn*dr, 0 ])
+            pmi = np.array([ r1+turn*dr, 0 ])
             mds.extend([pm])
             mdsi.extend([pmi])
 

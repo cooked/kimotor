@@ -433,27 +433,3 @@ def angle_and_bisect(t1, t2):
     b = b / np.linalg.norm(b)
 
     return a, b
-
-# TODO: remove? TBC
-def angle2(t1, t2):
-    # t1: first track
-    # t2: next track
-
-    # if arc, use tangent
-    if t2.GetClass() == 'PCB_ARC':
-        t2c = t2.GetCenter()
-        t2s = t2.GetStart()
-        # radial vector (from center to starting point)
-        t2rv = pcbnew.VECTOR2I( t2s.x-t2c.x, t2s.y-t2c.y )
-        #  vector normal to radius (i.e. tangent to arc at starting point)
-        t2v = - t2rv.Perpendicular()
-    else:
-        t2s = t2.GetStart()
-        t2e = t2.GetEnd()
-        t2v = pcbnew.VECTOR2I( t2e.x-t2s.x, t2e.y-t2s.y )
-
-    t1s = t1.GetStart()
-    t1e = t1.GetEnd()
-    t1v = pcbnew.VECTOR2I( t1e.x-t1s.x, t1e.y-t1s.y )
-
-    return t2v.Angle() - t1v.Angle()
