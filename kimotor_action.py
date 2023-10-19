@@ -54,8 +54,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     fc_jlcpcb_12 = {
         "track_width": 0.127, # (5mil)
         "track_space": 0.127, # (5mil)
-        "via_hole": 0.3,
-        "via_diameter": 0.6,
+        "via_hole": 0.15,
+        "via_diameter": 0.25,
     } 
 
     # terminal footprint dict
@@ -103,11 +103,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         )
 
         self.init_persist(self.pf)
-        self.init_parameters()
+
+        self.init_parameters(self.fc_jlcpcb_12)
+       
         if os.name == 'nt':
             self.r_fill = 0
             self.m_ctrlRfill.Disable()
-        self.init_config()
+        self.init_path()
         self.init_nets()
 
 
@@ -120,7 +122,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     def set_capabilities(self):
         return
     
-    def init_parameters(self):
+    def init_parameters(self, caps):
 
         # get gui values and fix units (mm converted to nm where needed)
 
@@ -132,8 +134,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.trk_w = int(self.m_ctrlTrackWidth.GetValue() * self.SCALE) # track width
         self.dr = self.trk_w * 2                                        # track distance
         
-        self.d_via = int(0.6 * self.SCALE)   # min via size
-        self.d_drill = int(0.3 * self.SCALE)   # min drill size
+        self.d_via = int(caps.get('via_diameter') * self.SCALE)   # min via size
+        self.d_drill = int(caps.get('via_hole') * self.SCALE)   # min drill size
 
 
         self.r_fill = int(self.m_ctrlRfill.GetValue() * self.SCALE)         # track fillet
@@ -157,7 +159,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         if self.group:
             self.btn_clear.Enable(True)
 
-    def init_config(self):
+    def init_path(self):
 
         self.fp_path = None
 
@@ -197,7 +199,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.board.Add(self.group)
 
         # refresh parameters
-        self.init_parameters()
+        self.init_parameters(self.fc_jlcpcb_12)
 
         # rm: inner radial position of the mounting holes
         # roc: outer coil radius
@@ -264,29 +266,26 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             _type_: _description_
         """
 
-        # 0: no arcs, 1: outer-arc only, 2: outer and inner arc
-        #arc_mode = 2
-        #skip = 4 if arc_mode==1 else (2 if arc_mode==2 else 0)
-
         cs = self.fpoint( int(mpt[0][0,0]), int(mpt[0][0,1]) )
 
         # index of current point
         ip = 0 
         t0 = None
 
-        for s in range( self.loops*4 - 1 ):
+        nseg = self.loops*4 - 1 
+        for seg in range(nseg):
 
             # start point
             ps = self.fpoint( int(mpt[ip][0,0]), int(mpt[ip][0,1]) )
             
             # even segments (0,2,4,etc.)
-            if not s%2:
+            if not seg%2:
                 ip += 1
                 t = pcbnew.PCB_ARC(self.board)
                 t.SetMid( self.fpoint(int(mpt[ip][0,0]), int(mpt[ip][0,1])) )
 
                 # 1: outer, -1: inner
-                side = 1 if not s%4 else -1
+                side = 1 if not seg%4 else -1
 
             else:
                 t = pcbnew.PCB_TRACK(self.board)
@@ -301,22 +300,11 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.board.Add(t)
 
             # fillet
-            if s > 0 and self.r_fill > 0:
+            if seg > 0 and self.r_fill > 0:
                 self.fillet(self.board, group, t0, t, self.r_fill, side)
 
             t0 = t
-
-            # TODO: trim inner
-
-            # trim coil if last outer side
-            # if iv == len(mmo):
-            #     m = kla.track_arc_trim(t, pm)
-            #     pmt = self.fpoint(int(m[0]),int(m[1]))
-            #     t.SetEnd( pm )
-            #     t.SetMid( pmt )
-            #     track0f = t
-            #     break
-
+            
         ce = t.GetEnd()
 
         return [cs, ce]
@@ -362,12 +350,16 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         # coil (corners, mid-points)
         if mode == 0:
-            pcu0, pcu0m, pcu0mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
-            pcu1, pcu1m, pcu1mi = ksolve.parallel( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
+            pcu0, pcu0m, pcu0mi = ksolve.parallel( 
+                int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
+            pcu1, pcu1m, pcu1mi = ksolve.parallel( 
+                int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
 
         else:
-            pcu0 = ksolve.radial( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
-            pcu1 = ksolve.radial( int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
+            pcu0 = ksolve.radial(
+                int(ri), int(ro), 2*self.trk_w, th0, self.loops, 0 )
+            pcu1 = ksolve.radial(
+                int(ri), int(ro), 2*self.trk_w, th0, self.loops, 1 )
         
         # coil terminals
         coil_t = []
@@ -387,7 +379,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             coil_se = []
 
             # rotation matrix
-            th = th0 * p + math.radians(0.0001); # FIXME: tweak to make it not straight up vertical
+            th = th0 * p + math.radians(0.0001) # FIXME: tweak to make it not straight up vertical
             c = math.cos(th)
             s = math.sin(th)
             R = np.array( [[c, -s],[s, c]] )
@@ -410,7 +402,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     via.SetLayerPair( laypar[idx-1], laypar[idx] )
                     via.SetPosition( ct[1] )
                     via.SetDrill( self.d_drill )
-                    via.SetWidth( self.trk_w )
+                    via.SetWidth( self.d_via )
                     self.board.Add(via)
 
                 # odd, CW
@@ -423,7 +415,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                         via.SetLayerPair( laypar[idx-1], laypar[idx] )
                         via.SetPosition( ct[0] )
                         via.SetDrill( self.d_drill )
-                        via.SetWidth( self.trk_w )
+                        via.SetWidth( self.d_via )
                         self.board.Add(via)
 
                 # append first and last only
@@ -541,8 +533,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             cnx_seg (list): contains start and end points of each arc segment of each 
             coil connector ring
         """
-     
-        #wx.LogWarning(f'{cnx_str}')
 
         phases = int(self.phases)
 
@@ -577,11 +567,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     j.SetEnd( rs )
                     self.board.Add(j)
 
-                    via = pcbnew.PCB_VIA(self.board)
-                    via.SetPosition( rs )
-                    via.SetDrill( self.d_drill )
-                    via.SetWidth( self.d_via )
-                    self.board.Add(via)
+                    if i == 0:
+                        via = pcbnew.PCB_VIA(self.board)
+                        via.SetPosition( rs )
+                        via.SetDrill( self.d_drill )
+                        via.SetWidth( self.d_via )
+                        self.board.Add(via)    
 
                     if p==0 or i==n_rc-1:
                         j = pcbnew.PCB_TRACK(self.board)

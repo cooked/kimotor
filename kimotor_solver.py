@@ -105,12 +105,18 @@ def radial(ri,ro, dr,th,turns,dir):
                 if turn == 0:
                     tp = kla.circle_line_intersect(lmp, c, ri)
                     pts.extend([pmi, tp[0:2], pc1, pc2, pmo, pc3])
+                elif turn == turns-1:
+                    tp = kla.circle_line_intersect(lmp, c, ro)
+                    pts.extend([pc4, pmi, pc1, pc2, tp[0:2], pmo])
                 else:
                     pts.extend([pc4, pmi, pc1, pc2, pmo, pc3])
             else:
                 if turn == 0:
                     tp = kla.circle_line_intersect(lmn, c, ri)
                     pts.extend([pmi, tp[0:2], pc4, pc3, pmo, pc2])
+                elif turn == turns-1:
+                    tp = kla.circle_line_intersect(lmn, c, ro)
+                    pts.extend([pc1, pmi, pc4, pc3, tp[0:2], pmo])
                 else:
                     pts.extend([pc1, pmi, pc4, pc3, pmo, pc2])
             

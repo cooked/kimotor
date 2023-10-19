@@ -13,20 +13,20 @@ def vec(t):
     v = np.array([ p2.x-p1.x, p2.y-p1.y, 0 ])
     return v
 
-def line_vec(l):
+def line_vec(lv):
     # line unit vector
-    p1 = l[0]   # start point [x,y]
-    p2 = l[1]   # end point [x, y]
+    p1 = lv[0]   # start point [x,y]
+    p2 = lv[1]   # end point [x, y]
     dx = p2[0]-p1[0]
     dy = p2[1]-p1[1]
     d = math.sqrt(dx**2 + dy**2)
     v = np.array([ dx/d, dy/d, 0])
     return v
 
-def line(l):
+def line(lt):
     # find params of line equation ( y = mx + k ), given a track
-    p1 = l[0]
-    p2 = l[1]
+    p1 = lt[0]
+    p2 = lt[1]
     dx = p2[0]-p1[0]
     dy = p2[1]-p1[1]
     m = dy/dx
