@@ -6,11 +6,25 @@ KiMotor is a [KiCad EDA](https://www.kicad.org/) plugin that automates the desig
 
 ![Alt text](assets/kimotor_02.png)
 
+## Requirements
+
+KiMotor requires [NumPy](https://numpy.org/) for all the math involved in the generation of the layouts.
+
+```bash
+# Linux - KiCad uses the system Python so, from the console, just run:
+pip3 install numpy
+
+# Mac - KiCad ships with its own Python so NumPy must be installed there:
+cd /Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/3.9
+./pip3 install numpy
+```
+
+
 ## Installation
 
 ### Manual, with Git clone
 
-This is the preferred way of installing the plugin. Cloning the repo allows you to manually pull in updates later on, as they become available
+This is the preferred installation method. Cloning the repo allows you to manually pull in updates later on, as they become available.
 
 Depending on your platform, you have to make sure the plugin is placed in the folder where KiCad expects it to be (see the plugins search paths [KiCad documentation](https://dev-docs.kicad.org/en/apis-and-binding/pcbnew/)):
 
@@ -21,7 +35,10 @@ Depending on your platform, you have to make sure the plugin is placed in the fo
 cd <HOME>/.var/app/org.kicad.KiCad/data/kicad/7.0/3rdparty/plugins
 # Windows
 cd C:\Users\<USERNAME>\Documents\KiCad\7.0\3rdparty\plugins
+# Mac 
+cd <HOME>/Documents/KiCad/7.0/3rdparty
 
+# then clone the repo
 git clone https://github.com/cooked/kimotor.git
 ```
 
@@ -38,7 +55,17 @@ While a Kimotor version do exist in the official KiCad plugin repository, it has
 fallen behind the development and is not recommended. 
 Stick to one ofthe manual installation methods listed above, until next official release.
 
-## What works and What does not
+## Troubleshooting
 
-TODO
+Sometimes it is hard to troubleshoot problems with the plugin.
+If there is an error preventing the plugin to load at all (no KiMotor icon in the toolbar), like in the case of missing Python packages, it is possible to [get a backtrace from the KiCad Scripting Console](https://forum.kicad.info/t/getting-started-using-python-scripts/14765/2) with the following commands:
+
+```python
+import pcbnew
+print pcbnew.GetWizardsBackTrace()
+```
+
+If the KiMotor plugin does load, but fails to generate a PCB layout because of a bug, it is still possible to get a popup with the error message, as long as the KiCad Scripting Console was open in the background before running the plugin.
+
+
 
