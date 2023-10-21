@@ -36,7 +36,7 @@ cd <HOME>/.var/app/org.kicad.KiCad/data/kicad/7.0/3rdparty/plugins
 # Windows
 cd C:\Users\<USERNAME>\Documents\KiCad\7.0\3rdparty\plugins
 # Mac 
-cd <HOME>/Documents/KiCad/7.0/3rdparty
+cd <HOME>/Documents/KiCad/7.0/3rdparty/plugins
 
 # then clone the repo
 git clone https://github.com/cooked/kimotor.git
