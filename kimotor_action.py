@@ -61,7 +61,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     # terminal footprint dict
     term_db = {
         "0.1"   : "SolderWire-0.1sqmm_1x01_D0.4mm_OD1mm",
-        "0.15"  : "SolderWire-0.15sqmm_1x01_D0.5",
+        "0.15"  : "SolderWire-0.15sqmm_1x01_D0.5mm_OD1.5mm",
         "0.25"  : "SolderWire-0.25sqmm_1x01_D0.65mm_OD1.7mm",
         "0.5"   : "SolderWire-0.5sqmm_1x01_D0.9mm_OD2.1mm",
         "0.75"  : "SolderWire-0.75sqmm_1x01_D1.25mm_OD2.3mm",
