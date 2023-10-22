@@ -287,7 +287,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 t.SetMid( self.fpoint(int(mpt[ip][0,0]), int(mpt[ip][0,1])) )
 
                 # 1: outer, -1: inner
-                side = 1 if not seg%4 else -1
+                side = -1 if not seg%4 else 1
 
             else:
                 t = pcbnew.PCB_TRACK(self.board)
@@ -402,7 +402,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             coil_se = []
 
             # rotation matrix
-            th = th0 * p + math.radians(0.0001) # FIXME: tweak to make it not straight up vertical
+            th = th0 * p #+ math.radians(0.0001) # FIXME: tweak to make it not straight up vertical
             c = math.cos(th)
             s = math.sin(th)
             R = np.array( [[c, -s],[s, c]] )
