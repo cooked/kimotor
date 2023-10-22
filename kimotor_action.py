@@ -330,9 +330,30 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         if ln >= 4:
             laypar.append(pcbnew.In1_Cu)
             laypar.append(pcbnew.In2_Cu)
-        if ln == 6:
+        if ln >= 6:
             laypar.append(pcbnew.In3_Cu)
             laypar.append(pcbnew.In4_Cu)
+        if ln >= 8:
+            laypar.append(pcbnew.In5_Cu)
+            laypar.append(pcbnew.In6_Cu)
+        if ln >= 10:
+            laypar.append(pcbnew.In7_Cu)
+            laypar.append(pcbnew.In8_Cu)
+        if ln >= 12:
+            laypar.append(pcbnew.In9_Cu)
+            laypar.append(pcbnew.In10_Cu)
+        if ln >= 14:
+            laypar.append(pcbnew.In11_Cu)
+            laypar.append(pcbnew.In12_Cu)
+        if ln >= 16:
+            laypar.append(pcbnew.In13_Cu)
+            laypar.append(pcbnew.In14_Cu)
+        if ln >= 18:
+            laypar.append(pcbnew.In15_Cu)
+            laypar.append(pcbnew.In16_Cu)
+        if ln >= 20:
+            laypar.append(pcbnew.In17_Cu)
+            laypar.append(pcbnew.In18_Cu)   
         laypar.append(pcbnew.B_Cu)
 
         try:

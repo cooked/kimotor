@@ -391,7 +391,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer212.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.m_ctrlLayers = SpinCtrlDoublePersist( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 2, 6, 2, 2, u"m_ctrlLayers" )
+		self.m_ctrlLayers = SpinCtrlDoublePersist( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.SP_ARROW_KEYS, 2, 20, 2, 2, u"m_ctrlLayers" )
 		self.m_ctrlLayers.SetDigits( 0 )
 		bSizer212.Add( self.m_ctrlLayers, 0, wx.ALL, 5 )
 

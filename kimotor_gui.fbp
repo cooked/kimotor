@@ -3218,7 +3218,7 @@
                                                 <property name="id">wxID_ANY</property>
                                                 <property name="inc">2</property>
                                                 <property name="initial">2</property>
-                                                <property name="max">6</property>
+                                                <property name="max">20</property>
                                                 <property name="max_size"></property>
                                                 <property name="maximize_button">0</property>
                                                 <property name="maximum_size"></property>
