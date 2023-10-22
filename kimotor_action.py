@@ -185,8 +185,10 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
     def init_nets(self):
         # init paths
-        nitem = pcbnew.NETINFO_ITEM(self.board, "gnd")
-        self.board.Add(nitem)
+        gnd = pcbnew.NETINFO_ITEM(self.board, "gnd")
+        coil = pcbnew.NETINFO_ITEM(self.board, "coil")
+        self.board.Add(gnd)
+        self.board.Add(coil)
 
     
 
@@ -642,25 +644,30 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         Args:
             r_t (int): radial position of the terminals
-            ext_t (list): coils' termination tracks
+            coils_t (list): list of coils tracks
 
         """
+        # locate terminal footprint
+        trm_lib_name = 'Connector_Wire'
+        trm_lib_path = self.fp_path + trm_lib_name + '.pretty'
+        trm_fp = self.term_db.get( self.m_termSize.GetStringSelection() )
+        
+        # retrieve nets
+        net_coil = self.board.FindNet("coil")
 
-        # number of terminals
+        # nr of terminals
         n_term = 2 if (self.m_cbScheme.GetStringSelection() == "1P") else ( 
             3 if (self.m_cbScheme.GetStringSelection() == "3P") else 4
         )
 
-        # select the footprint
-        fp_lib = self.fp_path + '/Connector_Wire.pretty'
-        fp = self.term_db.get( self.m_termSize.GetStringSelection() )
-        
+        # base angle, half (to position terminals), quarter (to locate arc track mid-point)
         th0 = 2*math.pi/self.slots
         thd = th0/2
+        thr = th0/4
 
         Rcw = np.array([
-            [math.cos(th0/4), -math.sin(th0/4)],
-            [math.sin(th0/4), math.cos(th0/4)],
+            [math.cos(thr), -math.sin(thr)],
+            [math.sin(thr), math.cos(thr)],
         ])
 
         for i in range(n_term):
@@ -670,31 +677,38 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
             ax = self.ri*math.cos(th)
             ay = self.ri*math.sin(th)
+            tp = np.matmul(Rcw, np.array([ax,ay]))  
+
             xy_t = self.fpoint( int(r_t*math.cos(th)), int(r_t*math.sin(th)) )
             xy_a = self.fpoint( int(ax), int(ay) )
             xy_c = coils_t[i][0]
 
             # terminal
-            m = pcbnew.FootprintLoad( fp_lib, fp )
-            m.SetReference('')
+            m = pcbnew.FootprintLoad( trm_lib_path, trm_fp )
+            m.Reference().SetVisible(False)
+            m.Value().SetVisible(False)
+            m.SetFPIDAsString(trm_lib_name + ":" + trm_fp)
+            m.SetReference('T'+str(i+1))
             m.SetPosition(xy_t)
             m.Rotate(xy_t, pcbnew.EDA_ANGLE(-th, pcbnew.RADIANS_T))
+            for p in m.Pads():
+                p.SetNet(net_coil)
             self.board.Add(m)
 
-            # track line
+            # track, straight part
             conn = pcbnew.PCB_TRACK(self.board)
             conn.SetLayer(pcbnew.F_Cu)
+            conn.SetNet(net_coil)
             conn.SetWidth(self.trk_w)
             conn.SetStart(xy_t)
             conn.SetEnd(xy_a)
             self.board.Add(conn)
-            # track arc
+            # track, arc part
             conn = pcbnew.PCB_ARC(self.board)
             conn.SetLayer(pcbnew.F_Cu)
+            conn.SetNet(net_coil)
             conn.SetWidth(self.trk_w)
-            conn.SetStart(xy_a)
-
-            tp = np.matmul(Rcw, np.array([ax,ay]))            
+            conn.SetStart(xy_a)    
             conn.SetMid( self.fpoint( int(tp[0]), int(tp[1])) )
             conn.SetEnd(xy_c)
             self.board.Add(conn) 
@@ -766,8 +780,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         z.SetIslandRemovalMode( pcbnew.ISLAND_REMOVAL_MODE_NEVER )
         z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL)
         self.board.Add(z)
-
-
 
         # inner (shaft) annular
         z = pcbnew.ZONE(self.board)
