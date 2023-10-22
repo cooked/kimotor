@@ -658,12 +658,20 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         th0 = 2*math.pi/self.slots
         thd = th0/2
 
+        Rcw = np.array([
+            [math.cos(th0/4), -math.sin(th0/4)],
+            [math.sin(th0/4), math.cos(th0/4)],
+        ])
+
         for i in range(n_term):
 
             # radial to cartesian coords of terminal, aux corner, coil start 
             th = th0*i - thd
+
+            ax = self.ri*math.cos(th)
+            ay = self.ri*math.sin(th)
             xy_t = self.fpoint( int(r_t*math.cos(th)), int(r_t*math.sin(th)) )
-            xy_a = self.fpoint( int(self.ri*math.cos(th)), int(self.ri*math.sin(th)) )
+            xy_a = self.fpoint( int(ax), int(ay) )
             xy_c = coils_t[i][0]
 
             # terminal
@@ -673,17 +681,21 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             m.Rotate(xy_t, pcbnew.EDA_ANGLE(-th, pcbnew.RADIANS_T))
             self.board.Add(m)
 
-            # tracks
+            # track line
             conn = pcbnew.PCB_TRACK(self.board)
             conn.SetLayer(pcbnew.F_Cu)
             conn.SetWidth(self.trk_w)
             conn.SetStart(xy_t)
             conn.SetEnd(xy_a)
             self.board.Add(conn)
-            conn = pcbnew.PCB_TRACK(self.board)
+            # track arc
+            conn = pcbnew.PCB_ARC(self.board)
             conn.SetLayer(pcbnew.F_Cu)
             conn.SetWidth(self.trk_w)
             conn.SetStart(xy_a)
+
+            tp = np.matmul(Rcw, np.array([ax,ay]))            
+            conn.SetMid( self.fpoint( int(tp[0]), int(tp[1])) )
             conn.SetEnd(xy_c)
             self.board.Add(conn) 
 

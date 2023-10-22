@@ -77,10 +77,15 @@ def radial(ri,ro, dr,th,turns,dir):
         # center
         c = [0,0,0]
         
+        # rotation of first arc and last ard mid-mid-points
+        Rcw = np.array([
+            [math.cos(th/4), -math.sin(th/4)],
+            [math.sin(th/4), math.cos(th/4)],
+        ])
+
         # first line
         l0 = np.array([ c, [ri*math.cos(th/2), ri*math.sin(th/2), 0] ])
-        lmp = np.array([ c, [ri*math.cos(th/4), ri*math.sin(th/4), 0] ])
-        lmn = np.array([ c, [ri*math.cos(th/4), -ri*math.sin(th/4), 0] ])
+
 
         for turn in range(turns):
             
@@ -103,19 +108,19 @@ def radial(ri,ro, dr,th,turns,dir):
             # order points
             if dir == 0:
                 if turn == 0:
-                    tp = kla.circle_line_intersect(lmp, c, ri)
+                    tp = np.matmul(Rcw, pmi)
                     pts.extend([pmi, tp[0:2], pc1, pc2, pmo, pc3])
                 elif turn == turns-1:
-                    tp = kla.circle_line_intersect(lmp, c, ro)
+                    tp = np.matmul(Rcw, pmo)
                     pts.extend([pc4, pmi, pc1, pc2, tp[0:2], pmo])
                 else:
                     pts.extend([pc4, pmi, pc1, pc2, pmo, pc3])
             else:
                 if turn == 0:
-                    tp = kla.circle_line_intersect(lmn, c, ri)
+                    tp = np.matmul(Rcw, pmi)
                     pts.extend([pmi, tp[0:2], pc4, pc3, pmo, pc2])
                 elif turn == turns-1:
-                    tp = kla.circle_line_intersect(lmn, c, ro)
+                    tp = np.matmul(Rcw, pmo)
                     pts.extend([pc1, pmi, pc4, pc3, tp[0:2], pmo])
                 else:
                     pts.extend([pc1, pmi, pc4, pc3, pmo, pc2])
