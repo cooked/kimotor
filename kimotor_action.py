@@ -105,14 +105,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.init_persist(self.pf)
 
         self.init_parameters(self.fc_jlcpcb_12)
-       
-        if os.name == 'nt':
-            self.r_fill = 0
-            self.m_ctrlRfill.Disable()
         self.init_path()
         self.init_nets()
 
-
+        #if os.name == 'nt':
+        #    self.r_fill = 0
+        #    self.m_ctrlRfill.Disable()
+        
     # init functions
     def init_persist(self, configFile):
         self.pm = PM.PersistenceManager.Get()
