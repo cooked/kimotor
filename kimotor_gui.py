@@ -31,7 +31,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer21211 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.lbl_refresh_time1211 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Motor shape:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1211" )
+		self.lbl_refresh_time1211 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Board outline:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1211" )
 		self.lbl_refresh_time1211.Wrap( -1 )
 
 		self.lbl_refresh_time1211.SetToolTip( u"Shape of the PCB motor outline." )
@@ -41,7 +41,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer21211.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		m_cbOutlineChoices = [ u"Circle", u"Square", u"Polygon" ]
+		m_cbOutlineChoices = [ u"None", u"Circle", u"Square", u"Polygon" ]
 		self.m_cbOutline = wx.ComboBox( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Circle", wx.DefaultPosition, wx.Size( 150,20 ), m_cbOutlineChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbOutline" )
 		self.m_cbOutline.SetSelection( 0 )
 		bSizer21211.Add( self.m_cbOutline, 0, wx.ALL, 5 )
@@ -51,7 +51,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer221 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.lbl_refresh_time21 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Motor size:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time21" )
+		self.lbl_refresh_time21 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Board size:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time21" )
 		self.lbl_refresh_time21.Wrap( -1 )
 
 		self.lbl_refresh_time21.SetToolTip( u"Size of the PCB motor. For a circular outline it corresponds to the board diameter, while for a square board it is the length of the PCB side." )
@@ -74,6 +74,32 @@ class KiMotorGUI ( wx.Frame ):
 
 
 		sbSizer2.Add( bSizer221, 1, wx.EXPAND, 5 )
+
+		bSizer22112 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time2112 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Board fillet:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2112" )
+		self.lbl_refresh_time2112.Wrap( -1 )
+
+		self.lbl_refresh_time2112.SetToolTip( u"Fillet radius to smooth board corners" )
+
+		bSizer22112.Add( self.lbl_refresh_time2112, 0, wx.ALL, 5 )
+
+
+		bSizer22112.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.lbl_refresh_time11441 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"[mm]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time11441" )
+		self.lbl_refresh_time11441.Wrap( -1 )
+
+		self.lbl_refresh_time11441.SetToolTip( u"Trace width in [mm]" )
+
+		bSizer22112.Add( self.lbl_refresh_time11441, 0, wx.ALL, 5 )
+
+		self.m_ctrlFilletRadius = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 0, 1000, 3.100000, 0.1, u"m_ctrlFilletRadius" )
+		self.m_ctrlFilletRadius.SetDigits( 2 )
+		bSizer22112.Add( self.m_ctrlFilletRadius, 0, wx.ALL, 5 )
+
+
+		sbSizer2.Add( bSizer22112, 1, wx.EXPAND, 5 )
 
 		bSizer2212 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -183,34 +209,12 @@ class KiMotorGUI ( wx.Frame ):
 
 		sbSizer2.Add( bSizer2211, 1, wx.EXPAND, 5 )
 
-		bSizer22112 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.lbl_refresh_time2112 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Outline fillet radius:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2112" )
-		self.lbl_refresh_time2112.Wrap( -1 )
-
-		bSizer22112.Add( self.lbl_refresh_time2112, 0, wx.ALL, 5 )
-
-
-		bSizer22112.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-
-		self.lbl_refresh_time11441 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"[mm]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time11441" )
-		self.lbl_refresh_time11441.Wrap( -1 )
-
-		self.lbl_refresh_time11441.SetToolTip( u"Trace width in [mm]" )
-
-		bSizer22112.Add( self.lbl_refresh_time11441, 0, wx.ALL, 5 )
-
-		self.m_ctrlFilletRadius = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 0, 1000, 3.100000, 0.1, u"m_ctrlFilletRadius" )
-		self.m_ctrlFilletRadius.SetDigits( 2 )
-		bSizer22112.Add( self.m_ctrlFilletRadius, 0, wx.ALL, 5 )
-
-
-		sbSizer2.Add( bSizer22112, 1, wx.EXPAND, 5 )
-
 		bSizer27 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.lbl_refresh_time13112 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Mounting holes:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1311" )
 		self.lbl_refresh_time13112.Wrap( -1 )
+
+		self.lbl_refresh_time13112.SetToolTip( u"Select the size, number and radial position of the mounting holes" )
 
 		bSizer27.Add( self.lbl_refresh_time13112, 0, wx.ALL, 5 )
 
@@ -301,7 +305,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer23.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		m_cbSchemeChoices = [ u"1P", u"3P", u"3P+N" ]
+		m_cbSchemeChoices = [ u"3P" ]
 		self.m_cbScheme = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, u"3P", wx.DefaultPosition, wx.Size( 150,20 ), m_cbSchemeChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbConnections" )
 		self.m_cbScheme.SetSelection( 1 )
 		bSizer23.Add( self.m_cbScheme, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
@@ -460,7 +464,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer271.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		m_cbTPChoices = [ u"THT", u"SMD" ]
+		m_cbTPChoices = [ u"None", u"THT", u"SMD" ]
 		self.m_cbTP = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, u"THT", wx.DefaultPosition, wx.Size( 90,20 ), m_cbTPChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbTP" )
 		self.m_cbTP.SetSelection( 0 )
 		bSizer271.Add( self.m_cbTP, 0, wx.ALL, 5 )
@@ -495,7 +499,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer2112.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.lbl_refresh_time1121 = wx.StaticText( sbSizer111.GetStaticBox(), wx.ID_ANY, u"[deg C]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1121" )
+		self.lbl_refresh_time1121 = wx.StaticText( sbSizer111.GetStaticBox(), wx.ID_ANY, u"[°C]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1121" )
 		self.lbl_refresh_time1121.Wrap( -1 )
 
 		self.lbl_refresh_time1121.SetToolTip( u"Trace width in [mm]" )
