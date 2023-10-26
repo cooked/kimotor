@@ -57,14 +57,14 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
     # fab capabilities (min)
     fc_jlcpcb_12 = {
-        "track_width": 0.127, # (5mil)
-        "track_space": 0.127, # (5mil)
-        "via_hole": 0.15,
+        "track_width":  0.127, # (5mil)
+        "track_space":  0.127, # (5mil)
+        "via_hole":     0.15,
         "via_diameter": 0.25,
     } 
 
     # terminal footprint dict
-    term_db = {
+    term_tht_db = {
         "0.1"   : "SolderWire-0.1sqmm_1x01_D0.4mm_OD1mm",
         "0.15"  : "SolderWire-0.15sqmm_1x01_D0.5mm_OD1.5mm",
         "0.25"  : "SolderWire-0.25sqmm_1x01_D0.65mm_OD1.7mm",
@@ -74,6 +74,18 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         "1.5"   : "SolderWire-1.5sqmm_1x01_D1.7mm_OD3.9mm",
         "2.0"   : "SolderWire-2sqmm_1x01_D2mm_OD3.9mm",
         "2.5"   : "SolderWire-2.5sqmm_1x01_D2.4mm_OD3.6mm"
+    }
+    term_smd_db = {
+        "1"     : "TestPoint_Pad_1.0x1.0mm",
+        "1.5"   : "TestPoint_Pad_1.5x1.5mm",
+        "2"     : "TestPoint_Pad_2.0x2.0mm",
+        "2.5"   : "TestPoint_Pad_2.5x2.5mm",
+        "3"     : "TestPoint_Pad_3.0x3.0mm",
+        "4"     : "TestPoint_Pad_4.0x4.0mm",
+    }
+    term_db = {
+        "THT"   : term_tht_db,
+        "SMD"   : term_smd_db
     }
 
     mhole_db = {
@@ -228,12 +240,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.drc = max(self.dr, self.d_via)
         [cnx_seg, cnx_str, cri] = self.do_races(self.drc, self.ri)
         self.do_junctions(coilp, cnx_seg, cnx_str)
-        self.do_terminals(self.rot, coil_t, self.trmtype)
-
         
-        self.via_rows = 2
+        if self.trmtype != "None":
+            self.do_terminals(self.rot, coil_t, self.trmtype)
 
         # create outline, holes and zones
+        self.via_rows = 2
         if self.outline != "None":
             self.do_outline(self.rb, self.ro, 8, self.o_fill)
             self.do_mounting_holes()
@@ -665,7 +677,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     j.SetEnd( cnx_str[p] )
                     self.board.Add(j)
 
-    def do_terminals(self, r_t, coils_t, pads="THT"):
+    def do_terminals(self, r_t, coils_t, pads=None):
         """ Create the motor terminals, and the tracks that connect the terminals to the coils
 
         Args:
@@ -674,9 +686,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         """
         # locate terminal footprint
-        trm_lib_name = 'Connector_Wire'
+        if not pads:
+            return
+        
+        trm_lib_name = 'Connector_Wire' if pads == 'THT' else 'TestPoint' if pads == 'SMD' else ''
         trm_lib_path = self.fp_path + trm_lib_name + '.pretty'
-        trm_fp = self.term_db.get( self.m_termSize.GetStringSelection() )
+        trm_fp = self.term_db.get(pads).get( self.m_termSize.GetStringSelection() )
         
         # retrieve nets
         net_coil = self.board.FindNet("coil")
@@ -1372,10 +1387,24 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             event.Skip()
 
     def on_cb_trmtype(self, event):
-        if self.m_cbTP.GetStringSelection() == "None":
+        pads = self.m_cbTP.GetStringSelection()
+
+        if pads == "None":
             self.m_termSize.Enable(False)
-        else:
+
+        elif pads == "THT" or pads == "SMD":
+            keys = self.term_db.get(pads).keys()
+            for i,k in enumerate(keys):
+                self.m_termSize.SetString(i,k)
+            while len(keys) < self.m_termSize.GetCount():
+                self.m_termSize.Delete( self.m_termSize.GetCount()-1 )
+
+            self.m_termSize.SetValue( 
+                self.m_termSize.GetString(
+                    self.m_termSize.GetCurrentSelection()))
+
             self.m_termSize.Enable(True)
+
         if event is not None:
             event.Skip()
 
