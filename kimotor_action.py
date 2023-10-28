@@ -179,8 +179,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.mhir = int(self.m_mhInR.GetValue() /2 * self.SCALE)
 
         # text
-        self.txt_size_mm = 0.5
-        self.txt_loc_mm = self.m_ctrlDout.GetValue()/2 - 3*self.txt_size_mm
+        self.txt_size = int(0.5 * self.SCALE)
+        self.txt_loc = int(self.ro - 3*self.txt_size)
 
         # init buttons state
         if self.group:
@@ -1063,13 +1063,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             "_s" + str(self.slots) +
             "_w" + str(self.loops)
         )
-        pcb_txt.SetPosition( 
-            self.fpoint( pcbnew.wxPointMM(0,self.txt_loc_mm))
-        )
-        #pcb_txt.Rotate(pcbnew.wxPointMM(x, y), text["angle"])
-        pcb_txt.SetTextSize(
-            self.fsize( pcbnew.wxPointMM(self.txt_size_mm,self.txt_size_mm))
-        )
+        pcb_txt.SetPosition( self.fpoint(0,self.txt_loc) )
+        pcb_txt.SetTextSize( self.fsize(self.txt_size,self.txt_size) )
         pcb_txt.SetLayer(pcbnew.F_SilkS)
         self.board.Add(pcb_txt)
 
