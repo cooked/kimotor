@@ -64,12 +64,12 @@ def radial(ri,ro, dr,th,turns,dir):
             ri (int): coil inner radius
             ro (int): coil outer radius
             dr (int): spacing between coil loops (and also adj. coils)
-            th (float): coil trapezoid angle 
+            th (float): coil trapezoid angle
             turns (int): number of coil loops (windings)
             dir (int): coil direction, from larger to smaller loop (0:CW normal, 1:CCW rverse)
 
         Returns:
-            matrix, matrix, matrix: corners (excl. arc mids), outer arc mids, inner arc mids
+            matrix, matrix, matrix: corners (excl. arc mids), outer-arc mid points, inner-arc mid points
         """
  
         pts = []

@@ -6,6 +6,7 @@ import shutil
 import numpy as np
 import math
 import json
+from datetime import datetime
 
 import wx
 import wx.lib.agw.persist.persistencemanager as PM
@@ -108,10 +109,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.SCALE = pcbnew.IU_PER_MM
             self.fpoint = pcbnew.wxPoint
             self.fpoint_vector = pcbnew.wxPoint_Vector
+            self.fsize = pcbnew.wxSize
         else:
             self.SCALE = pcbnew.FromMM(1)
             self.fpoint = pcbnew.VECTOR2I
             self.fpoint_vector = pcbnew.VECTOR_VECTOR2I
+            self.fsize = pcbnew.VECTOR2I
 
         # kick-off persistence
         self.pf = os.path.join(
@@ -175,6 +178,10 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.mhin = int(self.m_mhIn.GetValue())
         self.mhir = int(self.m_mhInR.GetValue() /2 * self.SCALE)
 
+        # text
+        self.txt_size_mm = 0.5
+        self.txt_loc_mm = self.m_ctrlDout.GetValue()/2 - 3*self.txt_size_mm
+
         # init buttons state
         if self.group:
             self.btn_clear.Enable(True)
@@ -216,7 +223,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
     def generate(self):
 
-        # TODO: improve board management
         self.group = pcbnew.PCB_GROUP( self.board )
         self.board.Add(self.group)
 
@@ -252,7 +258,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.do_thermal_zones(cri)
         
         # draw silks
-        self.do_silk( self.roc+self.trk_w, self.ri, self.th0 )
+        self.do_silkscreen( self.roc+self.trk_w, self.ri, self.th0 )
 
         # update board
         pcbnew.Refresh()
@@ -941,7 +947,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     # start, end, and mid angle
                     th = th0*p + thd
                     m = pcbnew.FootprintLoad( fp_lib, fp )
-                    m.SetReference('')
+                    m.Reference().SetVisible(False)
+                    m.Value().SetVisible(False)
+                    m.SetReference('M'+str(p))
                     m.SetPosition(
                         self.fpoint( int(rmo * math.cos(th)), int(rmo * math.sin(th))) )
                     for pad in m.Pads():
@@ -958,7 +966,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     s = int( 0.98 * rmo * np.sign( math.sin(th) ))
 
                     m = pcbnew.FootprintLoad( fp_lib, fp )
-                    m.SetReference('')
+                    m.Reference().SetVisible(False)
+                    m.Value().SetVisible(False)
+                    m.SetReference('M'+str(p))
                     m.SetPosition( self.fpoint(c,s) )
                     for pad in m.Pads():
                         pad.SetNet(ni_gnd)
@@ -1043,14 +1053,25 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             edge.SetLayer( pcbnew.Edge_Cuts )
             self.board.Add(edge)
 
-    def do_silk(self, ro, ri, th):
+    def do_silkscreen(self, ro, ri, th):
 
         # pcb label
-        #pcb_txt = pcbnew.PCB_TEXT(self.board)
-        #pcb_txt.SetText("kimotor_ph" + str(self.phases) + "_s" + str(self.slots))
-        #pcb_txt.SetPosition( self.fpoint( 0, int(self.ro)))
-        #pcb_txt.SetLayer(pcbnew.F_SilkS)
-        #self.board.Add(pcb_txt)
+        pcb_txt = pcbnew.PCB_TEXT(self.board)
+        pcb_txt.SetText(
+            datetime.today().strftime('%Y%m%d') + 
+            "_ly" + str(self.nl) +
+            "_s" + str(self.slots) +
+            "_w" + str(self.loops)
+        )
+        pcb_txt.SetPosition( 
+            self.fpoint( pcbnew.wxPointMM(0,self.txt_loc_mm))
+        )
+        #pcb_txt.Rotate(pcbnew.wxPointMM(x, y), text["angle"])
+        pcb_txt.SetTextSize(
+            self.fsize( pcbnew.wxPointMM(self.txt_size_mm,self.txt_size_mm))
+        )
+        pcb_txt.SetLayer(pcbnew.F_SilkS)
+        self.board.Add(pcb_txt)
 
         # mark active coil ring
         for r in [ro,ri]:
