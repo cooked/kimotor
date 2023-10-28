@@ -131,7 +131,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     
     def eda_angle(self,angle):
         if self.KICAD_VERSION < 7:
-            return angle
+            return angle *180/math.pi *100
         else:
             return pcbnew.EDA_ANGLE(angle, pcbnew.RADIANS_T)
 
