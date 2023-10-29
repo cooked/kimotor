@@ -164,7 +164,7 @@ class KiMotorGUI ( wx.Frame ):
 		self.lbl_refresh_time2 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Diameter, coil start (inner):", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2" )
 		self.lbl_refresh_time2.Wrap( -1 )
 
-		self.lbl_refresh_time2.SetToolTip( u"Radial position where the inner segments of the coils are located." )
+		self.lbl_refresh_time2.SetToolTip( u"Radial position where the innermost segments of the coils are located." )
 
 		bSizer22.Add( self.lbl_refresh_time2, 0, wx.ALL, 5 )
 
@@ -184,6 +184,32 @@ class KiMotorGUI ( wx.Frame ):
 
 
 		sbSizer2.Add( bSizer22, 1, wx.EXPAND, 5 )
+
+		bSizer222 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time22 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Diameter, coil end (outer):", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2" )
+		self.lbl_refresh_time22.Wrap( -1 )
+
+		self.lbl_refresh_time22.SetToolTip( u"Radial position where the outermost segments of the coils are located." )
+
+		bSizer222.Add( self.lbl_refresh_time22, 0, wx.ALL, 5 )
+
+
+		bSizer222.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.lbl_refresh_time11431 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"[mm]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1143" )
+		self.lbl_refresh_time11431.Wrap( -1 )
+
+		self.lbl_refresh_time11431.SetToolTip( u"Trace width in [mm]" )
+
+		bSizer222.Add( self.lbl_refresh_time11431, 0, wx.ALL, 5 )
+
+		self.m_ctrlDend = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 1, 9999, 85, 1, u"m_ctrlDend" )
+		self.m_ctrlDend.SetDigits( 2 )
+		bSizer222.Add( self.m_ctrlDend, 0, wx.ALL, 5 )
+
+
+		sbSizer2.Add( bSizer222, 1, wx.EXPAND, 5 )
 
 		bSizer2211 = wx.BoxSizer( wx.HORIZONTAL )
 

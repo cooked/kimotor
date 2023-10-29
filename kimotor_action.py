@@ -170,8 +170,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.w_mnt = int(self.m_ctrlWmnt.GetValue() * self.SCALE)
         self.w_trm = int(self.m_ctrlWtrm.GetValue() * self.SCALE)
 
-        self.ri = int(self.m_ctrlDin.GetValue() /2 * self.SCALE )
         self.rb = int(self.m_ctrlDbore.GetValue() /2 * self.SCALE)
+        self.ri = int(self.m_ctrlDin.GetValue() /2 * self.SCALE )
+        self.roc = int(self.m_ctrlDend.GetValue() /2 * self.SCALE )
 
         self.mhon = int(self.m_mhOut.GetValue())
         self.mhor = int(self.m_mhOutR.GetValue() /2 * self.SCALE)
@@ -229,12 +230,15 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # refresh parameters
         self.get_parameters(self.fc_jlcpcb_12)
 
-        # rm: inner radial position of the mounting holes
+        # rm: radial position of the mounting holes
         # roc: outer coil radius
         # rot: radial position of motor terminals
-        self.rm = self.ro - self.w_mnt
-        self.roc = self.rm - self.w_trm
-        self.rot = (self.roc + (self.ro-self.w_mnt)) / 2
+        
+        self.r_mholes = self.ro - self.w_mnt
+
+
+        # TODO: place terminals based on their size
+        self.rot = (self.roc + (self.roc+self.w_mnt)) / 2
 
         # slot angular width
         self.th0 = 2*math.pi/self.slots
@@ -733,14 +737,18 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             # terminal
             if self.trmtype != "None":
                 m = pcbnew.FootprintLoad( trm_lib_path, trm_fp )
-                m.Reference().SetVisible(False)
                 m.Value().SetVisible(False)
                 m.SetFPIDAsString(trm_lib_name + ":" + trm_fp)
-                m.SetReference('T'+str(i+1))
                 m.SetPosition(xy_t)
                 m.Rotate(xy_t, self.eda_angle(-th))
                 for p in m.Pads():
                     p.SetNet(net_coil)
+                
+                # REF
+                dth = 0.05 #rad
+                xy_s = self.fpoint( int(r_t*math.cos(th+dth)), int(r_t*math.sin(th+dth)) )
+                m.Reference().SetPosition( xy_s )
+                m.SetReference( "A" if i==0 else ("B" if i==1 else "C") )
                 self.board.Add(m)
 
             # track, straight part
@@ -760,19 +768,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             conn.SetMid( self.fpoint( int(tp[0]), int(tp[1])) )
             conn.SetEnd(xy_c)
             self.board.Add(conn) 
-
-            # label
-            pcb_txt = pcbnew.PCB_TEXT(self.board)
-            pcb_txt.SetText("A" if i==0 else ("B" if i==1 else "C"))
-            dth = .05
-            xy_s = self.fpoint( int(r_t*math.cos(th+dth)), int(r_t*math.sin(th+dth)) )
-            pcb_txt.SetPosition( xy_s )
-            pcb_txt.Rotate( 
-                pcb_txt.GetPosition(),
-                self.eda_angle(math.pi/2-th-dth)
-            )
-            pcb_txt.SetLayer(pcbnew.F_SilkS)
-            self.board.Add(pcb_txt)
 
     def do_thermal_zones(self, cri, nvias=36):
         # see refill:
@@ -842,7 +837,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
 
         # stitching
-        # drv = (self.ro - self.rm) / (self.via_rows+1)
+        # drv = (self.ro - self.r_mholes) / (self.via_rows+1)
         # dth = 2*math.pi / nvias
         # dths = dth/2
         # for j in range(self.via_rows):
@@ -877,7 +872,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             for c in cpl:
                 cp.append(self.fpoint(c[0],c[1]))
             z.AddPolygon( self.fpoint_vector(cp) )
-            cpl = kla.circle_to_polygon( self.rm + self.trk_w,  100 )
+            cpl = kla.circle_to_polygon( self.r_mholes + self.trk_w,  100 )
             cp = []
             for c in cpl:
                 cp.append(self.fpoint(c[0],c[1]))
@@ -892,7 +887,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             p.append( self.fpoint(-r2,r2) )
             z.AddPolygon( self.fpoint_vector(p) )
             p = []
-            r2 = self.rm + self.trk_w
+            r2 = self.r_mholes + self.trk_w
             p.append( self.fpoint(r2,r2) )
             p.append( self.fpoint(r2,-r2) )
             p.append( self.fpoint(-r2,-r2) )
