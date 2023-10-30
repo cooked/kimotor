@@ -41,7 +41,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer21211.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		m_cbOutlineChoices = [ u"None", u"Circle", u"Square", u"Polygon" ]
+		m_cbOutlineChoices = [ u"None", u"Circle", u"Square", u"Hexagon", u"Octagon" ]
 		self.m_cbOutline = wx.ComboBox( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Circle", wx.DefaultPosition, wx.Size( 150,20 ), m_cbOutlineChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbOutline" )
 		self.m_cbOutline.SetSelection( 0 )
 		bSizer21211.Add( self.m_cbOutline, 0, wx.ALL, 5 )
@@ -103,11 +103,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer2212 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_cbWmnt = wx.CheckBox( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0, wx.DefaultValidator, u"m_cbWmnt" )
-		self.m_cbWmnt.SetValue(True)
-		bSizer2212.Add( self.m_cbWmnt, 0, wx.ALL, 5 )
-
-		self.lbl_refresh_time212 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"w_mount:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time212" )
+		self.lbl_refresh_time212 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Width, annular (outer edge):", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time212" )
 		self.lbl_refresh_time212.Wrap( -1 )
 
 		self.lbl_refresh_time212.SetToolTip( u"Width of the exposed copper annular at the PCB outer edge" )
@@ -131,63 +127,9 @@ class KiMotorGUI ( wx.Frame ):
 
 		sbSizer2.Add( bSizer2212, 1, wx.EXPAND, 5 )
 
-		bSizer22121 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_cbWterm = wx.CheckBox( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0, wx.DefaultValidator, u"m_cbWterm" )
-		self.m_cbWterm.SetValue(True)
-		bSizer22121.Add( self.m_cbWterm, 0, wx.ALL, 5 )
-
-		self.lbl_refresh_time2121 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"w_terminals:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2121" )
-		self.lbl_refresh_time2121.Wrap( -1 )
-
-		bSizer22121.Add( self.lbl_refresh_time2121, 0, wx.ALL, 5 )
-
-
-		bSizer22121.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-
-		self.lbl_refresh_time1142 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"[mm]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1142" )
-		self.lbl_refresh_time1142.Wrap( -1 )
-
-		self.lbl_refresh_time1142.SetToolTip( u"Trace width in [mm]" )
-
-		bSizer22121.Add( self.lbl_refresh_time1142, 0, wx.ALL, 5 )
-
-		self.m_ctrlWtrm = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 0, 9999, 4, 0.1, u"m_ctrlWtrm" )
-		self.m_ctrlWtrm.SetDigits( 2 )
-		bSizer22121.Add( self.m_ctrlWtrm, 0, wx.ALL, 5 )
-
-
-		sbSizer2.Add( bSizer22121, 1, wx.EXPAND, 5 )
-
-		bSizer22 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.lbl_refresh_time2 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Diameter, coil start (inner):", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2" )
-		self.lbl_refresh_time2.Wrap( -1 )
-
-		self.lbl_refresh_time2.SetToolTip( u"Radial position where the innermost segments of the coils are located." )
-
-		bSizer22.Add( self.lbl_refresh_time2, 0, wx.ALL, 5 )
-
-
-		bSizer22.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-
-		self.lbl_refresh_time1143 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"[mm]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1143" )
-		self.lbl_refresh_time1143.Wrap( -1 )
-
-		self.lbl_refresh_time1143.SetToolTip( u"Trace width in [mm]" )
-
-		bSizer22.Add( self.lbl_refresh_time1143, 0, wx.ALL, 5 )
-
-		self.m_ctrlDin = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 1, 9999, 26.000000, 1, u"m_ctrlDin" )
-		self.m_ctrlDin.SetDigits( 2 )
-		bSizer22.Add( self.m_ctrlDin, 0, wx.ALL, 5 )
-
-
-		sbSizer2.Add( bSizer22, 1, wx.EXPAND, 5 )
-
 		bSizer222 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.lbl_refresh_time22 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Diameter, coil end (outer):", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2" )
+		self.lbl_refresh_time22 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Diameter, coil (outer end):", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2" )
 		self.lbl_refresh_time22.Wrap( -1 )
 
 		self.lbl_refresh_time22.SetToolTip( u"Radial position where the outermost segments of the coils are located." )
@@ -210,6 +152,32 @@ class KiMotorGUI ( wx.Frame ):
 
 
 		sbSizer2.Add( bSizer222, 1, wx.EXPAND, 5 )
+
+		bSizer22 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time2 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Diameter, coil (inner end):", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2" )
+		self.lbl_refresh_time2.Wrap( -1 )
+
+		self.lbl_refresh_time2.SetToolTip( u"Radial position where the innermost segments of the coils are located." )
+
+		bSizer22.Add( self.lbl_refresh_time2, 0, wx.ALL, 5 )
+
+
+		bSizer22.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.lbl_refresh_time1143 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"[mm]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1143" )
+		self.lbl_refresh_time1143.Wrap( -1 )
+
+		self.lbl_refresh_time1143.SetToolTip( u"Trace width in [mm]" )
+
+		bSizer22.Add( self.lbl_refresh_time1143, 0, wx.ALL, 5 )
+
+		self.m_ctrlDin = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 1, 9999, 26.000000, 1, u"m_ctrlDin" )
+		self.m_ctrlDin.SetDigits( 2 )
+		bSizer22.Add( self.m_ctrlDin, 0, wx.ALL, 5 )
+
+
+		sbSizer2.Add( bSizer22, 1, wx.EXPAND, 5 )
 
 		bSizer2211 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -234,6 +202,30 @@ class KiMotorGUI ( wx.Frame ):
 
 
 		sbSizer2.Add( bSizer2211, 1, wx.EXPAND, 5 )
+
+		bSizer22121 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.lbl_refresh_time2121 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"Diameter, terminals:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time2121" )
+		self.lbl_refresh_time2121.Wrap( -1 )
+
+		bSizer22121.Add( self.lbl_refresh_time2121, 0, wx.ALL, 5 )
+
+
+		bSizer22121.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.lbl_refresh_time1142 = wx.StaticText( sbSizer2.GetStaticBox(), wx.ID_ANY, u"[mm]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time1142" )
+		self.lbl_refresh_time1142.Wrap( -1 )
+
+		self.lbl_refresh_time1142.SetToolTip( u"Trace width in [mm]" )
+
+		bSizer22121.Add( self.lbl_refresh_time1142, 0, wx.ALL, 5 )
+
+		self.m_ctrlDterm = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 0, 9999, 4, 0.1, u"m_ctrlWtrm" )
+		self.m_ctrlDterm.SetDigits( 2 )
+		bSizer22121.Add( self.m_ctrlDterm, 0, wx.ALL, 5 )
+
+
+		sbSizer2.Add( bSizer22121, 1, wx.EXPAND, 5 )
 
 		bSizer27 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -279,7 +271,7 @@ class KiMotorGUI ( wx.Frame ):
 
 		bSizer213.Add( self.lbl_refresh_time1312, 0, wx.ALL, 5 )
 
-		self.m_mhOutR = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 10, 1000, 100.000000, 0.1, u"m_mhOutR" )
+		self.m_mhOutR = SpinCtrlDoublePersist( sbSizer2.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 10, 1000, 90, 0.1, u"m_mhOutR" )
 		self.m_mhOutR.SetDigits( 2 )
 		bSizer213.Add( self.m_mhOutR, 0, wx.ALL, 5 )
 

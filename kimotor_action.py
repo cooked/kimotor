@@ -149,12 +149,24 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # get gui values and fix units (mm converted to nm where needed)
 
         self.outline = self.m_cbOutline.GetStringSelection()
+        if self.outline=="Circle":
+            self.ne = 0
+        elif self.outline=="Square":
+            self.ne = 4
+        elif self.outline=="Hexagon":
+            self.ne = 6
+        elif self.outline=="Octagon":
+            self.ne = 8
+        else:
+            self.ne = -1
+
         self.trmtype = self.m_cbTP.GetStringSelection()
 
         self.nl     = int(self.m_ctrlLayers.GetValue())
-        self.phases = 1 if (self.m_cbScheme.GetStringSelection() == "1P") else 3
+        self.phases = int(1 if (self.m_cbScheme.GetStringSelection() == "1P") else 3)
         self.slots  = int(self.m_ctrlSlots.GetValue())
         self.loops  = int(self.m_ctrlLoops.GetValue())
+        self.strategy = self.m_cbStrategy.GetSelection()
 
         self.trk_w = int(self.m_ctrlTrackWidth.GetValue() * self.SCALE) # track width
         self.dr = self.trk_w * 2                                        # track distance
@@ -162,21 +174,23 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.d_via = int(caps.get('via_diameter') * self.SCALE)   # min via size
         self.d_drill = int(caps.get('via_hole') * self.SCALE)   # min drill size
 
+        # TODO: this to become a parameter (e.g. via grid size or something)
+        self.via_rows = 2
 
         self.r_fill = int(self.m_ctrlRfill.GetValue() * self.SCALE)         # track fillet
         self.o_fill = int(self.m_ctrlFilletRadius.GetValue() * self.SCALE)  # outline fillet
 
-        self.ro = int(self.m_ctrlDout.GetValue() /2 * self.SCALE)
-        self.w_mnt = int(self.m_ctrlWmnt.GetValue() * self.SCALE)
-        self.w_trm = int(self.m_ctrlWtrm.GetValue() * self.SCALE)
-
+        self.ro = int(self.m_ctrlDout.GetValue() /2 * self.SCALE) # board size
         self.rb = int(self.m_ctrlDbore.GetValue() /2 * self.SCALE)
         self.ri = int(self.m_ctrlDin.GetValue() /2 * self.SCALE )
         self.roc = int(self.m_ctrlDend.GetValue() /2 * self.SCALE )
+        self.rtrm = int(self.m_ctrlDterm.GetValue()/2 * self.SCALE)
+        self.w_mnt = int(self.m_ctrlWmnt.GetValue() * self.SCALE) # width of the outer no-soldermask annular zone
 
-        self.mhon = int(self.m_mhOut.GetValue())
+        self.mhs = self.m_cbMountSize.GetStringSelection()
+        self.nmho = int(self.m_mhOut.GetValue())
         self.mhor = int(self.m_mhOutR.GetValue() /2 * self.SCALE)
-        self.mhin = int(self.m_mhIn.GetValue())
+        self.nmhi = int(self.m_mhIn.GetValue())
         self.mhir = int(self.m_mhInR.GetValue() /2 * self.SCALE)
 
         # text
@@ -244,34 +258,34 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.th0 = 2*math.pi/self.slots
 
         # generate and connect coils
-        strategy = self.m_cbStrategy.GetSelection()
-        [coil_t, coilp ] = self.do_coils(self.nl, self.ri, self.roc, strategy)
+        [coil_t, coilp ] = self.do_coils(self.nl, self.ri, self.roc, self.strategy)
 
         self.drc = max(self.dr, self.d_via)
         [cnx_seg, cnx_str, cri] = self.do_races(self.drc, self.ri)
-        self.do_junctions(coilp, cnx_seg, cnx_str)
+        self.do_junctions(self.phases, coilp, cnx_seg, cnx_str)
         
         if self.trmtype != "None":
             self.do_terminals(self.rot, coil_t, self.trmtype)
 
-        # create outline, holes and zones
-        self.via_rows = 2
+        # create outline, mounting holes and thermal zones
         if self.outline != "None":
-            self.do_outline(self.rb, self.ro, 8, self.o_fill)
-            self.do_mounting_holes()
+            self.do_outline(self.rb, self.ro, self.ne, self.o_fill)
+            self.do_mounting_holes(hs=self.mhs)
             self.do_thermal_zones(cri)
         
-        # draw silks
+        # draw silkscreen
         self.do_silkscreen( self.roc+self.trk_w, self.ri, self.th0 )
 
         # update board
         pcbnew.Refresh()
 
-        self.btn_clear.Enable(True)
-
+        # TODO: all stats shall be moved here
+         
         # update gui stats
         self.lbl_phaseLength.SetLabel( '%.2f' % self.tl )
         self.lbl_phaseR.SetLabel( '%.2f' % self.tr )
+
+        self.btn_clear.Enable(True)
 
     def update_lset(self):
         self.layset = [pcbnew.F_Cu]
@@ -574,17 +588,17 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # - radial location of the innermost ring + some (used for filling keep-out)
         return conns_t, cnx_star, cri-2*dr
 
-    def do_junctions(self, coilp, cnx_seg, cnx_str):
-        """ Create the "jumpers" segments that connect the coil terminations to the  
-        They are placed between the coils and the shaft bore.
+    def do_junctions(self, ph, coilp, cnx_seg, cnx_str):
+        """ Create the "jumpers" segments that connect the coil terminations to the 
+        race tracks of the connecting inner rings.
 
         Args:
+            ph (int): number of motor phases
             coilp (list): contains start and end points of each coil, grouped by phase
             cnx_seg (list): contains start and end points of each arc segment of each 
             coil connector ring
         """
 
-        phases = int(self.phases)
 
         # slot angular width
         # TODO: make them to the class to avoid code duplication
@@ -594,9 +608,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         ri = self.ri - self.drc
 
         # number of distinct segments, per each phase 
-        n_rc = int(self.slots/self.phases)-1
+        n_rc = int(self.slots/ph)-1
 
-        for p in range(phases):
+        for p in range(ph):
                         
             for i in range(n_rc):
                 
@@ -634,8 +648,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
                     else:
                         # cross under the other phases
-                        th_s = th0*( p + i*phases ) + thd
-                        th_e = th_s + th0*phases - 2*thd
+                        th_s = th0*( p + i*ph ) + thd
+                        th_e = th_s + th0*ph - 2*thd
                         xy_a = self.fpoint(
                             int(ri*math.cos(th_e)), 
                             int(ri*math.sin(th_e)))
@@ -769,46 +783,143 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             conn.SetEnd(xy_c)
             self.board.Add(conn) 
 
-    def do_thermal_zones(self, cri, nvias=36):
+    def do_outline(self, r1, r2, ne=0, rf=0):
+
+        # r1: bore radius
+        # r2: external board edge dimension
+        # ne: number of board edges (0: circle, 4: square, 4+: polygon)
+        # rf: outline fillet radius
+
+        edge = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_CIRCLE)
+        edge.SetCenter( self.fpoint(0,0) )
+        edge.SetStart( self.fpoint(0,0) )
+        edge.SetEnd( self.fpoint(r1,0) )
+        edge.SetLayer( pcbnew.Edge_Cuts )
+        self.board.Add(edge)
+
+        if ne == 0:
+            edge = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_CIRCLE)
+            edge.SetCenter( self.fpoint(0,0) )
+            edge.SetStart( self.fpoint(0,0) )
+            edge.SetEnd( self.fpoint(r2,0) )
+            edge.SetLayer( pcbnew.Edge_Cuts )
+            self.board.Add(edge)
+
+        elif ne >= 4:
+            rp = r2 / math.cos(math.pi/ne) # circumscribed polygon
+            #rp = r2 * math.cos(math.pi/ne) # inscribed polygon
+            thp = 2*math.pi/ne
+            tho = thp/2
+
+            points = []
+            for i in range(ne):
+                points.append(
+                    self.fpoint( int(rp * math.cos(i*thp+tho)), int(rp * math.sin(i*thp+tho)) )
+                )
+
+            segs = {}
+            for i in range(ne):
+                seg = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_SEGMENT)
+                seg.SetStart( points[i] )
+                seg.SetEnd( points[(i+1)%ne] )
+                seg.SetLayer( pcbnew.Edge_Cuts )
+                self.board.Add(seg)
+                segs[i] = seg
+            # fillet
+            #if rf:
+            #    for i in range(ne):
+            #        a = segs[i]
+            #        b = segs[(i+1) % 4]
+            #        self.fillet_outline(self.board, a, b, rf)
+
+    def do_mounting_holes(self, hs="None"):
+        # no: number of outer mount points
+        # ni: number of inner shaft mount points
+        # see https://forum.kicad.info/t/place-update-footprint-with-python/23103
+
+        if hs != "None":
+            fp_lib = self.fp_path + '/MountingHole.pretty'
+            fp = self.mhole_db.get(hs)
+        else:
+            return
+
+        ni_gnd = self.board.FindNet("gnd")
+
+        # inner/outer holes, nr and radial location
+        rmi = self.mhir
+        rmo = self.mhor
+
+        if self.ne == 0:
+            th0 = 2*math.pi/self.nmho
+            nr = range(self.nmho)
+
+        elif self.ne >= 4:
+            rmo /= math.cos(math.pi/self.ne) 
+            th0 = 2*math.pi/self.ne
+            nr = range(self.ne)
+
+        # outer
+        for i in nr:
+            m = pcbnew.FootprintLoad( fp_lib, fp )
+            m.Reference().SetVisible(False)
+            m.Value().SetVisible(False)
+            m.SetReference('M'+str(i))
+            m.SetPosition(
+                self.fpoint( 
+                    int(rmo * math.cos(th0*i + th0/2)), 
+                    int(rmo * math.sin(th0*i + th0/2))))
+            for pad in m.Pads():
+                pad.SetNet(ni_gnd)
+            self.board.Add(m)
+
+        # inner
+        if self.nmhi:
+            th0 = 2*math.pi/self.nmhi
+            for i in range(self.nmhi):
+                m = pcbnew.FootprintLoad( fp_lib, fp )
+                m.SetReference('')
+                m.SetPosition(
+                self.fpoint( 
+                    int(rmi * math.cos(th0*i + th0/2)), 
+                    int(rmi * math.sin(th0*i + th0/2))))
+                for pad in m.Pads():
+                    pad.SetNet(ni_gnd)
+                self.board.Add(m)
+
+    def do_thermal_zones(self, r_nosmi, r_nosmo=0, nvias=36):
         # see refill:
         # https://forum.kicad.info/t/python-scripting-refill-all-zones/35834
         # TODO: add cooling fingers (TBD)
 
-        # no solder mask inner zone
-        rnsi = cri #self.ri - 8*self.d_via
-
-        # retrieve gnd net
         ni_gnd = self.board.FindNet("gnd")
 
         # get our layers right
         self.update_lset()
         ls = pcbnew.LSET()
-        for l in self.layset:
-            ls.addLayer(l)
+        for ly in self.layset:
+            ls.addLayer(ly)
 
         # prepare filler
         filler = pcbnew.ZONE_FILLER(self.board)
 
         # outer zone
         z = pcbnew.ZONE(self.board)
-
-        if self.outline == "Circle":
-            roz = 1.01*self.ro # r of the outer zone (1% larger than board outline)
-            cpl = kla.circle_to_polygon( roz, 100 )
+        if self.ne == 0:
+            cpl = kla.circle_to_polygon( self.ro, 100 )
             cp = []
             for c in cpl:
                 cp.append(self.fpoint(c[0],c[1]))
             z.AddPolygon( self.fpoint_vector(cp) )
-
-        elif self.outline == "Square":
-            r2 = int(1.01*self.ro)
+        elif self.ne >= 4:
+            ro = int(self.ro / math.cos(math.pi/self.ne) )
             p = []
-            p.append( self.fpoint(r2,r2) )
-            p.append( self.fpoint(r2,-r2) )
-            p.append( self.fpoint(-r2,-r2) )
-            p.append( self.fpoint(-r2,r2) )
+            p.append( self.fpoint(ro,ro) )
+            p.append( self.fpoint(ro,-ro) )
+            p.append( self.fpoint(-ro,-ro) )
+            p.append( self.fpoint(-ro,ro) )
             z.AddPolygon( self.fpoint_vector(p) )
 
+        # shaft zone
         cpl = kla.circle_to_polygon( self.roc + 2*self.trk_w, 100 )
         cp = []
         for c in cpl:
@@ -818,13 +929,13 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         z.SetLayerSet(ls)
         z.SetNet(ni_gnd)
         z.SetLocalClearance( self.trk_w )
-        z.SetIslandRemovalMode( pcbnew.ISLAND_REMOVAL_MODE_NEVER )
+        z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_NEVER)
         z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL)
         self.board.Add(z)
 
         # inner (shaft) annular
         z = pcbnew.ZONE(self.board)
-        cpl = kla.circle_to_polygon( rnsi, 100 )
+        cpl = kla.circle_to_polygon( r_nosmi, 100 )
         cp = []
         for c in cpl:
             cp.append(self.fpoint(c[0],c[1]))
@@ -832,11 +943,70 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         z.AddPolygon( self.fpoint_vector(cp) )
         z.SetLayerSet(ls)
         z.SetNet(ni_gnd)
-        z.SetIslandRemovalMode( pcbnew.ISLAND_REMOVAL_MODE_NEVER )
+        z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_NEVER)
         self.board.Add(z)
 
 
-        # stitching
+
+        # no solder mask
+        nls = pcbnew.LSET()
+        nls.addLayer(pcbnew.F_Mask)
+        nls.addLayer(pcbnew.B_Mask)
+        z = pcbnew.ZONE(self.board)
+
+        if self.ne == 0:
+            cpl = kla.circle_to_polygon( self.ro, 100 )
+            cp = []
+            for c in cpl:
+                cp.append(self.fpoint(c[0],c[1]))
+            z.AddPolygon( self.fpoint_vector(cp) )
+            #cpl = kla.circle_to_polygon( self.r_mholes + self.trk_w,  100 )
+            cpl = kla.circle_to_polygon( self.ro - self.w_mnt,  100 )
+            cp = []
+            for c in cpl:
+                cp.append(self.fpoint(c[0],c[1]))
+            z.AddPolygon( self.fpoint_vector(cp) )
+
+        elif self.ne >= 4:
+
+            r2 = int(self.ro / math.cos(math.pi/self.ne))
+            th0 = 2*math.pi/self.ne
+            points = []
+            for i in range(self.ne):
+                points.append(
+                    self.fpoint(
+                        int(r2 * math.cos(th0*i+th0/2)), 
+                        int(r2 * math.sin(th0*i+th0/2))))
+            z.AddPolygon( self.fpoint_vector(points) )
+            
+            points = []
+            r2 = int((self.ro - self.w_mnt) / math.cos(math.pi/self.ne))
+            for i in range(self.ne):
+                points.append(
+                    self.fpoint(
+                        int(r2 * math.cos(th0*i+th0/2)), 
+                        int(r2 * math.sin(th0*i+th0/2))))
+            z.AddPolygon( self.fpoint_vector(points) )
+
+        z.SetLayerSet(nls)
+        z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_NEVER)
+        self.board.Add(z)
+
+        z = pcbnew.ZONE(self.board)
+        cpl = kla.circle_to_polygon(r_nosmi, 100)
+        cp = []
+        for c in cpl:
+            cp.append(self.fpoint(c[0],c[1]))
+
+        z.AddPolygon( self.fpoint_vector(cp) )
+        z.SetLayerSet(nls)
+        z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_NEVER)
+        self.board.Add(z)
+
+        filler.Fill(self.board.Zones())
+
+
+        # via stitching
         # drv = (self.ro - self.r_mholes) / (self.via_rows+1)
         # dth = 2*math.pi / nvias
         # dths = dth/2
@@ -860,193 +1030,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #             self.board.Add(via)
 
 
-        # no solder mask
-        nls = pcbnew.LSET()
-        nls.addLayer(pcbnew.F_Mask)
-        nls.addLayer(pcbnew.B_Mask)
-        z = pcbnew.ZONE(self.board)
-
-        if self.outline == "Circle":
-            cpl = kla.circle_to_polygon( self.ro, 100 )
-            cp = []
-            for c in cpl:
-                cp.append(self.fpoint(c[0],c[1]))
-            z.AddPolygon( self.fpoint_vector(cp) )
-            cpl = kla.circle_to_polygon( self.r_mholes + self.trk_w,  100 )
-            cp = []
-            for c in cpl:
-                cp.append(self.fpoint(c[0],c[1]))
-            z.AddPolygon( self.fpoint_vector(cp) )
-
-        elif self.outline == "Square":
-            r2 = int(1.01*self.ro)
-            p = []
-            p.append( self.fpoint(r2,r2) )
-            p.append( self.fpoint(r2,-r2) )
-            p.append( self.fpoint(-r2,-r2) )
-            p.append( self.fpoint(-r2,r2) )
-            z.AddPolygon( self.fpoint_vector(p) )
-            p = []
-            r2 = self.r_mholes + self.trk_w
-            p.append( self.fpoint(r2,r2) )
-            p.append( self.fpoint(r2,-r2) )
-            p.append( self.fpoint(-r2,-r2) )
-            p.append( self.fpoint(-r2,r2) )
-            z.AddPolygon( self.fpoint_vector(p) )
-
-        z.SetLayerSet(nls)
-        z.SetIslandRemovalMode( pcbnew.ISLAND_REMOVAL_MODE_NEVER )
-        self.board.Add(z)
-
-        z = pcbnew.ZONE(self.board)
-        cpl = kla.circle_to_polygon( rnsi, 100 )
-        cp = []
-        for c in cpl:
-            cp.append(self.fpoint(c[0],c[1]))
-
-        z.AddPolygon( self.fpoint_vector(cp) )
-        z.SetLayerSet(nls)
-        z.SetIslandRemovalMode( pcbnew.ISLAND_REMOVAL_MODE_NEVER )
-        self.board.Add(z)
-
-        filler.Fill(self.board.Zones())
-
-    def do_mounting_holes(self):
-        # no: number of outer mount points
-        # ni: number of inner shaft mount points
-        # see https://forum.kicad.info/t/place-update-footprint-with-python/23103
-
-        hs = self.m_cbMountSize.GetStringSelection()
-        if hs != "None":
-            fp_lib = self.fp_path + '/MountingHole.pretty'
-            fp = self.mhole_db.get( hs )
-        else:
-            return
-
-        # retrieve gnd net
-        ni_gnd = self.board.FindNet("gnd")
-
-        # inner/outer holes, nr and radial location
-        nmo = self.mhon
-        nmi = self.mhin
-        rmo = int(0.95*self.mhor)
-        rmi = self.mhir
-
-        if nmo:
-            if self.outline == "Circle":
-                # circle
-                th0 = math.radians(360/nmo)
-                thd = th0/2
-                for p in range(nmo):
-                    # (inner) concentric arc races
-                    # start, end, and mid angle
-                    th = th0*p + thd
-                    m = pcbnew.FootprintLoad( fp_lib, fp )
-                    m.Reference().SetVisible(False)
-                    m.Value().SetVisible(False)
-                    m.SetReference('M'+str(p))
-                    m.SetPosition(
-                        self.fpoint( int(rmo * math.cos(th)), int(rmo * math.sin(th))) )
-                    for pad in m.Pads():
-                        pad.SetNet(ni_gnd)
-                    self.board.Add(m)
-
-            elif self.outline == "Square":
-                # square
-                nmo = 8
-                th0 = math.radians(360/nmo)
-                for p in range(nmo):
-                    th = th0*p + math.pi/nmo
-                    c = int( 0.98 * rmo * np.sign( math.cos(th) ))
-                    s = int( 0.98 * rmo * np.sign( math.sin(th) ))
-
-                    m = pcbnew.FootprintLoad( fp_lib, fp )
-                    m.Reference().SetVisible(False)
-                    m.Value().SetVisible(False)
-                    m.SetReference('M'+str(p))
-                    m.SetPosition( self.fpoint(c,s) )
-                    for pad in m.Pads():
-                        pad.SetNet(ni_gnd)
-
-                    self.board.Add(m)
-
-            elif self.outline == "Polygon":
-                # polygon
-                # TODO:
-                return 0
-
-        if nmi:
-            th0 = math.radians(360/nmi)
-            thadj = math.radians(0)
-            for p in range(nmi):
-                # (inner) concentric arc races
-                # start, end, and mid angle
-                th = th0*p + thadj
-                m = pcbnew.FootprintLoad( fp_lib, fp )
-                m.SetReference('')
-                m.SetPosition(
-                    self.fpoint( int(rmi * math.cos(th)), int(rmi * math.sin(th))) )
-                # assign net
-                for pad in m.Pads():
-                    pad.SetNet(ni_gnd)
-                self.board.Add(m)
-
-        return 0
-
-    def do_outline(self, r1, r2, edges=6, rf=0):
-
-        # r1: bore radius
-        # r2: outer radius
-        # type: outline shape
-        # edges: polygon edges (only if type=="Polygon")
-        # rf: fillet radius
-
-        edge = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_CIRCLE)
-        edge.SetCenter( self.fpoint(0,0) )
-        edge.SetStart( self.fpoint(0,0) )
-        edge.SetEnd( self.fpoint(r1,0) )
-        edge.SetLayer( pcbnew.Edge_Cuts )
-        self.board.Add(edge)
-
-        if self.outline == "Circle":
-            edge = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_CIRCLE)
-            edge.SetCenter( self.fpoint(0,0) )
-            edge.SetStart( self.fpoint(0,0) )
-            edge.SetEnd( self.fpoint(r2,0) )
-            edge.SetLayer( pcbnew.Edge_Cuts )
-            self.board.Add(edge)
-
-        elif self.outline == "Square":
-            rect = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_RECT)
-            rect.SetStart( self.fpoint( -r2,-r2 ) )
-            rect.SetEnd( self.fpoint( r2,r2 ) )
-            points = list(rect.GetRectCorners())
-            points.append(points[0])
-            segs = {}
-            for idx in range(4):
-                seg = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_SEGMENT)
-                seg.SetStart( points[idx] )
-                seg.SetEnd( points[idx+1] )
-                seg.SetLayer( pcbnew.Edge_Cuts )
-                self.board.Add(seg)
-                segs[idx] = seg
-            # fillet
-            if rf:
-                for idx in range(4):
-                    a = segs[idx]
-                    b = segs[(idx + 1) % 4]
-                    self.fillet_outline(self.board, a, b, rf)
-
-        elif self.outline == "Polygon":
-            # TODO: fillet (see above)
-            cpl = kla.circle_to_polygon(r2,edges)
-            cp = []
-            for c in cpl:
-                cp.append(self.fpoint(c[0],c[1]))
-            edge = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_POLY)
-            edge.SetPolyPoints( cp )
-            edge.SetLayer( pcbnew.Edge_Cuts )
-            self.board.Add(edge)
 
     def do_silkscreen(self, ro, ri, th):
 
@@ -1170,9 +1153,42 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         t1.SetEnd( self.fpoint(int(p1[0]),int(p1[1]))  )
         t2.SetStart( self.fpoint(int(p2[0]),int(p2[1]))  )
 
+    def fillet_outline(self, board, a, b, r):
+
+        c = kla.line_line_center(a,b,r)
+        # trim point track1
+        l1 = kla.line_points(a)
+        p1 = kla.circle_line_tg( l1, c, r)
+        # trim point track2
+        l2 = kla.line_points(b)
+        p2 = kla.circle_line_tg( l2, c, r)
+        # arc mid-point
+        ae = a.GetEnd()
+        la = np.array([c, [ae.x, ae.y, 0]])
+        lv = kla.line_vec(la)
+        m = c + np.dot(r, lv)
+
+
+        # generate fillet track
+        f = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_ARC)
+
+        wx.LogWarning(f'{p1[0]} {p1[1]}')
+        f.SetStart( self.fpoint(int(p1[0]),int(p1[1])) )
+        #f.SetMid( self.fpoint(int(m[0]),int(m[1])) )
+        f.SetEnd( self.fpoint(int(p2[0]),int(p2[1])) )
+
+        f.SetLayer(a.GetLayer())
+        f.SetWidth(a.GetWidth())
+        board.Add(f)
+
+        # trim edges
+        a.SetEnd( self.fpoint(int(p1[0]),int(p1[1]))  )
+        b.SetStart( self.fpoint(int(p2[0]),int(p2[1]))  )
+
+        
     ## borrowed from fillet_helper.py
     ## https://github.com/tywtyw2002/FilletEdge/blob/master/fillet_helper.py
-    def fillet_outline(self, board, a, b, fillet_value):
+    def fillet_outline_old(self, board, a, b, fillet_value):
         # must be cw rotate, swap if ccw rotate
         theta = 0
         a_s = a.GetStart()
@@ -1392,7 +1408,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.m_ctrlFilletRadius.Enable(False)
         else:
             self.m_ctrlDout.Enable(True)
-            self.m_ctrlFilletRadius.Enable(True)
+            #self.m_ctrlFilletRadius.Enable(True)
+            self.m_ctrlFilletRadius.Enable(False)
 
         if event is not None:
             event.Skip()
