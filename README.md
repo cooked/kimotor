@@ -67,5 +67,44 @@ print pcbnew.GetWizardsBackTrace()
 
 If the KiMotor plugin does load, but fails to generate a PCB layout because of a bug, it is still possible to get a popup with the error message, as long as the KiCad Scripting Console was open in the background before running the plugin.
 
+## Developers
 
+### Code flow
+
+```mermaid
+
+%%{
+  init: {
+    //'theme': 'forest'
+  }
+}%%
+
+flowchart TD
+  
+  A["Generate"] --> get_parameters
+
+  subgraph get_parameters
+    direction LR
+    db[(DB \n parameters)]
+  end
+
+  subgraph do_coils
+    direction TB
+    k(ksolver) --> t("coil_tracker")
+  end
+  
+  get_parameters --> do_coils
+  do_coils --> D("do_races")
+  D --> E("do_junctions")
+  E --> F("do_terminals")
+
+  F --> O{outline?}
+    O -->|Y| OU("do_outline")
+    O -->|N| S
+  OU --> H("do_mounting_holes")
+  H --> I("do_thermal_zones")
+
+  I --> S("do_silkscreen")
+
+```
 
