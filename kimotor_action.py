@@ -165,7 +165,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.n_layers = int(self.m_ctrlLayers.GetValue())
         self.lset = self.udpate_lset(self.n_layers)
         self.n_loops  = int(self.m_ctrlLoops.GetValue())
-        self.phases = int(1 if (self.m_cbScheme.GetStringSelection() == "1P") else 3)
+        self.n_phases = int(1 if (self.m_cbScheme.GetStringSelection() == "1P") else 3)
         self.n_slots  = int(self.m_ctrlSlots.GetValue())
         
         self.strategy = self.m_cbStrategy.GetSelection()
@@ -281,30 +281,29 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # get GUI parameters
         self.get_parameters(self.fc_jlcpcb_12)
 
-        # slot angular width
-        self.th0 = 2*math.pi/self.n_slots
-
         # generate and connect coils
         coils = self.do_windings(
             self.r_coil_in, 
             self.r_coil_out,
             self.dr,
             self.n_slots,
+            self.n_phases,
             self.n_loops,
             self.lset,
             self.strategy)
 
+        # generate phase rings
         [cnx_seg, cnx_str, cri] = self.do_rings(
             self.r_coil_in,
             max(self.dr, self.d_via),
             self.n_slots,
-            self.phases)
+            self.n_phases)
         
         self.do_junctions(
             self.r_coil_in,
             self.dr,
             self.n_slots,
-            self.phases,
+            self.n_phases,
             coils, 
             cnx_seg, 
             cnx_str)
@@ -342,7 +341,10 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 cri)
         
         # draw silkscreen
-        self.do_silkscreen( self.r_coil_out+self.trk_w, self.r_coil_in, self.th0 )
+        self.do_silkscreen(
+            self.r_coil_in,
+            self.r_coil_out+self.trk_w, 
+            self.n_slots)
 
         # update board
         pcbnew.Refresh()
@@ -363,10 +365,10 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.btn_clear.Enable(True)
 
     def coil_tracker(self, waypts, layer, n_loops, group):
-        """ Connnect the coil waypoints with PCB tracks on the assigned (single) layer  
+        """ Connnect the coil waypoints with PCB tracks on the assigned layer  
 
         Args:
-            waypts (numpy.matrix): set of the coil corner points
+            waypts (numpy.matrix): set of the coil waypoints
             layer (pcbnew.LAYER): layer on which the tracks are created
             n_loops (int): number of coil loops
 
@@ -380,17 +382,18 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         ip = 0 
         t0 = None
 
-        n_seg = n_loops*4 - 1 
+        # define how many sides 
+        n_side = n_loops*4 - 1 
 
-        for seg in range(n_seg):
+        for side in range(n_side):
 
-            # start point
-            ps = self.fpoint( 
+            # side start point
+            side_s = self.fpoint( 
                 int(waypts[ip][0,0]), 
                 int(waypts[ip][0,1]))
             
-            # even segments (0,2,4,etc.)
-            if not seg%2:
+            # even sides (0,2,4,etc.)
+            if not side%2:
                 ip += 1
                 t = pcbnew.PCB_ARC(self.board)
                 t.SetMid(
@@ -398,25 +401,26 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                         int(waypts[ip][0,0]),
                         int(waypts[ip][0,1])))
 
-                # 1: outer, -1: inner
-                side = -1 if not seg%4 else 1
-
+                # 1: outer side, -1: inner side
+                side = -1 if not side%4 else 1
+            
+            # odd sides
             else:
                 t = pcbnew.PCB_TRACK(self.board)
 
             ip += 1
-            pe = self.fpoint( 
+            side_e = self.fpoint( 
                 int(waypts[ip][0,0]), 
                 int(waypts[ip][0,1]))
             t.SetNet(net_coil)
             t.SetWidth( self.trk_w )
             t.SetLayer( layer )
-            t.SetStart( ps )
-            t.SetEnd( pe )
+            t.SetStart( side_s )
+            t.SetEnd( side_e )
             self.board.Add(t)
 
             # fillet
-            if seg > 0 and self.r_fill > 0:
+            if side > 0 and self.r_fill > 0:
                 fa = self.fillet(self.board, t0, t, self.r_fill, side)
                 #group.AddItem(fa)
 
@@ -431,7 +435,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         return coil_se
 
-    def do_windings(self, ri, ro, dr, n_slots, n_loops=1, lset=None, mode=0):
+    def do_windings(self, ri, ro, dr, n_slots, n_phases, n_loops=1, lset=None, mode=0):
         """ Generate the coil tracks (with fillet) on the given PCB layers
 
         Args:
@@ -462,6 +466,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         # generate coil waypoints
         if mode == 0:
+            # TODO: update
             waypts_cw, pcu0m, pcu0mi = ksolve.parallel( ri, ro, dr, th0, n_loops, 0 )
             waypts_ccw, pcu1m, pcu1mi = ksolve.parallel( ri, ro, dr, th0, n_loops, 1 )
         else:
@@ -472,7 +477,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             waypts_ccw1 = ksolve.coil_planner( "radial", ri, ro, dr, n_slots, n_loops, "ccw", 1 )
 
         windings = []
-        for p in range(self.phases):
+        for p in range(n_phases):
             windings.append([])
         
 
@@ -558,7 +563,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
                 elif len(lset)>2 and not i%2 and i>0:
 
-                    # on even layers (coil CW) stitch coils' start points 
+                    # on even layers (coil CW), but first, stitch coils' start points 
 
                     iv = int(i/2)
 
@@ -609,7 +614,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     winding_se.append(coil_se[0])
    
             # store coils by phase
-            windings[ slot % self.phases ].append(winding_se)
+            windings[ slot % n_phases ].append(winding_se)
 
         return windings
 
@@ -1136,7 +1141,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         #             via.SetNet(ni_gnd)
         #             self.board.Add(via)
 
-    def do_silkscreen(self, ro, ri, th):
+    def do_silkscreen(self, r_in, r_out, n_slots):
+
+        th0 = 2*math.pi/n_slots
 
         # pcb label
         pcb_txt = pcbnew.PCB_TEXT(self.board)
@@ -1152,7 +1159,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.board.Add(pcb_txt)
 
         # mark active coil ring
-        for r in [ro,ri]:
+        for r in [r_in, r_out]:
             c = pcbnew.PCB_SHAPE(self.board)
             c.SetShape(pcbnew.SHAPE_T_CIRCLE)
             c.SetFilled(False)
@@ -1163,16 +1170,15 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.board.Add(c)
   
         # slot center
-        th_0 = 2*math.pi/self.n_slots
         la = 0.05
-        for p in range(self.n_slots):
+        for slot in range(n_slots):
             xy_s = self.fpoint( 
-                int( (1+la)*ri*math.cos(th_0*p)), 
-                int((1+la)*ri*math.sin(th_0*p))
+                int( (1+la)*r_in*math.cos(th0*slot)), 
+                int((1+la)*r_in*math.sin(th0*slot))
             )
             xy_e = self.fpoint( 
-                int((1-la)*ro*math.cos(th_0*p)), 
-                int((1-la)*ro*math.sin(th_0*p))
+                int((1-la)*r_out*math.cos(th0*slot)), 
+                int((1-la)*r_out*math.sin(th0*slot))
             )
             c = pcbnew.PCB_SHAPE(self.board)
             c.SetShape(pcbnew.SHAPE_T_SEGMENT)
