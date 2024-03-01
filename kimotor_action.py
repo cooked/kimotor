@@ -229,6 +229,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         if self.fp_path is None:
             self.fp_path = os.getenv("KICAD"+str(self.KICAD_VERSION)+"_FOOTPRINT_DIR", default=None)
 
+        # ensure only one separator
+        self.fp_path = os.path.normpath(self.fp_path) + os.sep
+
         # no library found
         if self.fp_path is None:
             wx.LogError("Footprint library not found - Make sure the KiCad paths are properly configured.")
@@ -853,7 +856,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # see https://forum.kicad.info/t/place-update-footprint-with-python/23103
 
         if hs != "None":
-            fp_lib = self.fp_path + '/MountingHole.pretty'
+            fp_lib = self.fp_path + 'MountingHole.pretty'
             fp = self.mhole_db.get(hs)
         else:
             return
