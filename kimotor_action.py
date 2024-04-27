@@ -23,6 +23,12 @@ else:
 
 class KiMotor(pcbnew.ActionPlugin):
     def defaults(self):
+        self.version = ""
+        self.metadata_file = os.path.join(os.path.dirname(__file__), 'metadata.json')
+        with open(self.metadata_file, 'r') as f:
+            data = json.load(f)
+            self.version = data['versions'][0]['version']
+
         self.name = "KiMotor"
         self.category = "Modify Drawing PCB"
         self.description = "KiMotor - Parametric PCB motor design"
@@ -34,6 +40,7 @@ class KiMotor(pcbnew.ActionPlugin):
         self.board = pcbnew.GetBoard()
         dlg = KiMotorDialog(self.frame, self.board)
         dlg.SetIcon( wx.Icon(self.icon_file_name) )
+        dlg.SetTitle( self.name+" v"+self.version )
         dlg.Show()
 
 class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
