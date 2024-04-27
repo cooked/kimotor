@@ -327,7 +327,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             
             self.do_mounting_holes(
                 self.r_mh_out,
-                6 if self.outline=="Circle" else self.n_edges,
+                self.n_mh_out if self.outline=="Circle" else self.n_edges,
                 self.r_mh_in,
                 self.n_mh_in,
                 self.n_edges,
