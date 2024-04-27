@@ -327,9 +327,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             
             self.do_mounting_holes(
                 self.r_mh_out,
-                self.n_mh_out if self.outline=="Circle" else self.n_edges,
+                self.n_mh_out if self.outline=="Circle" else self.n_edges if self.n_mh_out>0 else 0,
                 self.r_mh_in,
-                self.n_mh_in,
+                self.n_mh_in if self.outline=="Circle" else self.n_edges if self.n_mh_in>0 else 0,
                 self.n_edges,
                 hs=self.mhs)
             
@@ -866,32 +866,34 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         if n_edge>0:
             r_mh_out /= math.cos(math.pi/n_edge) 
 
-        th0 = 2*math.pi/n_mh_out
-
         # outer
-        for i in range(n_mh_out):
-            m = pcbnew.FootprintLoad( fp_lib, fp )
-            m.Reference().SetVisible(False)
-            m.Value().SetVisible(False)
-            m.SetReference('M'+str(i))
-            m.SetPosition(
-                self.fpoint( 
-                    int(r_mh_out * math.cos(th0*i + th0/2)), 
-                    int(r_mh_out * math.sin(th0*i + th0/2))))
-            for pad in m.Pads():
-                pad.SetNet(ni_gnd)
-            self.board.Add(m)
+        if n_mh_out:
+            th0 = 2*math.pi/n_mh_out
+            for i in range(n_mh_out):
+                m = pcbnew.FootprintLoad( fp_lib, fp )
+                m.Reference().SetVisible(False)
+                m.Value().SetVisible(False)
+                m.SetReference('Mo'+str(i))
+                m.SetPosition(
+                    self.fpoint( 
+                        int(r_mh_out * math.cos(th0*i + th0/2)), 
+                        int(r_mh_out * math.sin(th0*i + th0/2))))
+                for pad in m.Pads():
+                    pad.SetNet(ni_gnd)
+                self.board.Add(m)
 
         # inner
         if n_mh_in:
             th0 = 2*math.pi/n_mh_in
             for i in range(n_mh_in):
                 m = pcbnew.FootprintLoad( fp_lib, fp )
-                m.SetReference('')
+                m.Reference().SetVisible(False)
+                m.Value().SetVisible(False)
+                m.SetReference('Mi'+str(i))
                 m.SetPosition(
-                self.fpoint( 
-                    int(r_mh_in * math.cos(th0*i + th0/2)), 
-                    int(r_mh_in * math.sin(th0*i + th0/2))))
+                    self.fpoint( 
+                        int(r_mh_in * math.cos(th0*i + th0/2)), 
+                        int(r_mh_in * math.sin(th0*i + th0/2))))
                 for pad in m.Pads():
                     pad.SetNet(ni_gnd)
                 self.board.Add(m)
@@ -1418,7 +1420,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             self.m_ctrlFilletRadius.Enable(False)
         else:
             self.m_ctrlDout.Enable(True)
-            #self.m_ctrlFilletRadius.Enable(True)
             self.m_ctrlFilletRadius.Enable(False)
 
         if event is not None:
