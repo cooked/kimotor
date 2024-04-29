@@ -166,8 +166,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         # terminals
         self.trmtype = self.m_cbTP.GetStringSelection()
-        self.n_term = 2 if (self.m_cbScheme.GetStringSelection() == "1P") else ( 
-            3 if (self.m_cbScheme.GetStringSelection() == "3P") else 4)
+        self.n_term = 3 #2 if (self.m_cbScheme.GetStringSelection() == "1P") else ( 
+            #3 if (self.m_cbScheme.GetStringSelection() == "3P") else 4)
         
         self.n_layers = int(self.m_ctrlLayers.GetValue())
         self.lset = self.udpate_lset(self.n_layers)
@@ -465,15 +465,14 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         th0 = 2*math.pi/n_slots
 
         r_via = ri - dr
-        thv = math.atan2(dr, r_via)
+        thv = math.atan2(1.5*dr, r_via)
 
         r_via_o = ro - n_loops*dr
-        thv_o = math.atan2(dr, r_via_o)
+        thv_o = math.atan2(1.5*dr, r_via_o)
 
         n_via = len(lset)/2
-        vias = range(int(-n_via/2), int(n_via/2))
+        vias = range(0,1) if n_via==1 else range(int(-n_via/2), math.ceil(n_via/2))
         
-
         # generate coil waypoints
         if mode == 0:
             # TODO: update
@@ -482,22 +481,19 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         else:
             waypts_cw = ksolve.coil_planner( "radial", ri, ro, dr, n_slots, n_loops, "cw" )
             waypts_ccw = ksolve.coil_planner( "radial", ri, ro, dr, n_slots, n_loops, "ccw" )
-
             waypts_cw1 = ksolve.coil_planner( "radial", ri, ro, dr, n_slots, n_loops, "cw", 1 )
             waypts_ccw1 = ksolve.coil_planner( "radial", ri, ro, dr, n_slots, n_loops, "ccw", 1 )
 
         windings = []
         for p in range(n_phases):
             windings.append([])
-        
 
         for slot in range(n_slots):
-
             pgroup = pcbnew.PCB_GROUP( self.board )
             pgroup.SetName("slot_"+str(slot))
             self.board.Add(pgroup)
 
-            # start and end points of single winding
+            # start/end points of single winding
             winding_se = []
 
             # rotation matrix
@@ -516,8 +512,11 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 
                 # pick the right "template" of waypoints
                 if i==0 or i==len(lset)-1:
+                    # outer layers: ...
                     wp = waypts_ccw_R if i%2 else waypts_cw_R
+
                 else:
+                    # inner layers: ...
                     wp = waypts_ccw1_R if i%2 else waypts_cw1_R
 
                 # generate coil 
@@ -527,12 +526,15 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 if i%2 and i<len(lset):
                     
                     # on odd layers (coil CCW) stitch coils' end points 
-                    
-                    iv = int(i/2)
+                    iv = math.floor(i/2)
 
+                    # via index
+                    viv = vias[iv]
+
+                    # via coordinates
                     xy_v = self.fpoint( 
-                        int(r_via_o*math.cos(th + thv_o*vias[iv])), 
-                        int(r_via_o*math.sin(th + thv_o*vias[iv])))
+                        int(r_via_o*math.cos(th + thv_o*viv)), 
+                        int(r_via_o*math.sin(th + thv_o*viv)))
                     
                     # stitch
                     via = pcbnew.PCB_VIA(self.board)
@@ -541,6 +543,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     via.SetDrill( self.d_drill )
                     via.SetWidth( self.d_via )
                     self.board.Add(via)
+
+                    #
                     a = pcbnew.PCB_ARC(self.board)
                     a.SetNet(net_coil)
                     a.SetLayer(lset[i-1])
@@ -555,6 +559,23 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                             int((r_via_o+dr)*math.cos(th + thv_o*vias[iv] /2 )), 
                             int((r_via_o+dr)*math.sin(th + thv_o*vias[iv] /2 ))))
                     self.board.Add(a)
+
+                    if viv > 0:
+                        a = pcbnew.PCB_ARC(self.board)
+                        a.SetNet(net_coil)
+                        a.SetLayer(lset[i])
+                        a.SetWidth(self.trk_w)
+                        a.SetStart( coil_se[1] )
+                        a.SetEnd(
+                            self.fpoint( 
+                                int((r_via_o+dr)*math.cos(th + thv_o*viv)), 
+                                int((r_via_o+dr)*math.sin(th + thv_o*viv))))
+                        a.SetMid(
+                            self.fpoint( 
+                                int((r_via_o+dr)*math.cos(th + thv_o*viv /2 )), 
+                                int((r_via_o+dr)*math.sin(th + thv_o*viv /2 ))))
+                        self.board.Add(a)
+
                     t = pcbnew.PCB_TRACK(self.board)
                     t.SetNet(net_coil)
                     t.SetWidth( self.trk_w )
@@ -570,16 +591,17 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     t.SetEnd( xy_v )
                     self.board.Add(t)
 
-
-                elif len(lset)>2 and not i%2 and i>0:
-
-                    # on even layers (coil CW), but first, stitch coils' start points 
+                # on even layers (coil CW), but first, stitch coils' start points
+                elif not i%2 and i>0:
 
                     iv = int(i/2)
 
+                    # via index
+                    viv = vias[iv]
+
                     xy_v = self.fpoint( 
-                        int(r_via*math.cos(th + thv*vias[iv])), 
-                        int(r_via*math.sin(th + thv*vias[iv])))
+                        int(r_via*math.cos(th + thv*viv)), 
+                        int(r_via*math.sin(th + thv*viv)))
                     
                     # stitch
                     via = pcbnew.PCB_VIA(self.board)
@@ -596,14 +618,31 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     a.SetStart( coil_se[0] )
                     a.SetEnd(
                         self.fpoint( 
-                            int((r_via+dr)*math.cos(th + thv*vias[iv])), 
-                            int((r_via+dr)*math.sin(th + thv*vias[iv]))))
+                            int((r_via+dr)*math.cos(th + thv*viv)), 
+                            int((r_via+dr)*math.sin(th + thv*viv))))
                     a.SetMid(
                         self.fpoint( 
-                            int((r_via+dr)*math.cos(th + thv*vias[iv] /2 )), 
-                            int((r_via+dr)*math.sin(th + thv*vias[iv] /2 ))))
+                            int((r_via+dr)*math.cos(th + thv*viv /2 )), 
+                            int((r_via+dr)*math.sin(th + thv*viv /2 ))))
                     self.board.Add(a)
+                    
+                    if viv<0:
+                        a = pcbnew.PCB_ARC(self.board)
+                        a.SetNet(net_coil)
+                        a.SetLayer(lset[i])
+                        a.SetWidth(self.trk_w)
+                        a.SetStart( coil_se[0] )
+                        a.SetEnd(
+                            self.fpoint( 
+                                int((r_via+dr)*math.cos(th + thv*viv)), 
+                                int((r_via+dr)*math.sin(th + thv*viv))))
+                        a.SetMid(
+                            self.fpoint( 
+                                int((r_via+dr)*math.cos(th + thv*viv /2 )), 
+                                int((r_via+dr)*math.sin(th + thv*viv /2 ))))
+                        self.board.Add(a)
 
+                    
                     t = pcbnew.PCB_TRACK(self.board)
                     t.SetNet(net_coil)
                     t.SetWidth( self.trk_w )
@@ -618,6 +657,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     t.SetStart( a.GetEnd() )
                     t.SetEnd( xy_v )
                     self.board.Add(t)
+
 
                 # append first and last only
                 if i==0 or i==len(lset)-1:
@@ -871,6 +911,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 int(r_term*math.cos(th)), 
                 int(r_term*math.sin(th)))
             xy_a = self.fpoint( int(ax), int(ay) )
+            
+            wx.LogWarning(f"{i} / {n_term}, {range(n_term)}")
+
             xy_c = coils[i][0][0]
 
             # terminal
