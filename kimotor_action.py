@@ -911,9 +911,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                 int(r_term*math.cos(th)), 
                 int(r_term*math.sin(th)))
             xy_a = self.fpoint( int(ax), int(ay) )
-            
-            wx.LogWarning(f"{i} / {n_term}, {range(n_term)}")
-
             xy_c = coils[i][0][0]
 
             # terminal
