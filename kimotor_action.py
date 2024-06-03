@@ -320,7 +320,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         
         # terminals
         if self.trmtype != "None":
-            trm_lib = self.fp_path + 'Connector_Wire.pretty' if self.trmtype=='THT' else 'TestPoint.pretty'
+            trm_lib = self.fp_path + ('Connector_Wire.pretty' if self.trmtype=='THT' else 'TestPoint.pretty')
             trm_fp = self.term_db.get(self.trmtype).get(self.m_termSize.GetStringSelection())
 
             self.do_terminals(
