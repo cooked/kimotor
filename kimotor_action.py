@@ -1,4 +1,4 @@
-# Copyright 2022 Stefano Cottafavi <stefano.cottafavi@gmail.com>
+# Copyright 2022-2024 Stefano Cottafavi <stefano.cottafavi@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
 import os
@@ -64,12 +64,22 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     tthick = 35e-6 # [m] copper thickness (1oz layer specs)
 
     # fab capabilities (min)
-    fc_jlcpcb_12 = {
+    rules = None
+
+    rules_preset_jlcpcb12 = {
         "track_width":  0.127, # (5mil)
         "track_space":  0.127, # (5mil)
+        "via_hole":     0.3,
+        "via_diameter": 0.5,
+    } 
+
+    rules_preset_jlcpcb4 = {
+        "track_width":  0.09, # (3.5mil)
+        "track_space":  0.09, # (3.5mil)
         "via_hole":     0.15,
         "via_diameter": 0.25,
     } 
+
 
     # terminal footprint dict
     term_tht_db = {
@@ -148,7 +158,40 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         self.pm.SetPersistenceFile(configFile)
         self.pm.RegisterAndRestoreAll(self)
 
-    def get_parameters(self, caps):
+    def get_parameters(self, rules=None):
+
+        specs = self.m_cbPreset.GetStringSelection()
+        if specs=="DRC Rules":
+            self.rules = self.board.GetDesignSettings()
+            self.min_clear = self.rules.m_MinClearance
+
+            self.trk_w = self.rules.m_TrackMinWidth
+            self.vmaw = self.rules.m_ViasMinAnnularWidth
+
+            self.d_drill = self.rules.m_MinThroughDrill
+            self.d_via = max(self.rules.m_ViasMinSize, self.d_drill + 2*self.vmaw)
+
+        elif specs=="Current T/V":
+            self.rules = self.board.GetDesignSettings()
+            self.min_clear = self.rules.m_MinClearance
+            self.vmaw = self.rules.m_ViasMinAnnularWidth
+
+            self.trk_w = self.rules.GetCurrentTrackWidth()
+            self.d_drill = self.rules.GetCurrentViaDrill()
+            self.d_via = self.rules.GetCurrentViaSize()
+            aw = (self.d_via-self.d_drill)/2
+
+            if aw < self.vmaw:
+                wx.LogError(f'Via annular width is smaller than min allowed by DRC ({pcbnew.ToMM(aw)} < {pcbnew.ToMM(self.vmaw)})')
+                return -1
+
+        else:
+            wx.LogError('Invalid PCB preset!')
+            return -1
+
+        # helpers
+        self.dr = self.trk_w + self.min_clear
+        self.dt = self.d_via + self.min_clear
 
         # get gui values and fix units (mm converted to nm where needed)
 
@@ -177,11 +220,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         
         self.strategy = self.m_cbStrategy.GetSelection()
 
-        self.trk_w = int(self.m_ctrlTrackWidth.GetValue() * self.SCALE) # track width
-        self.dr = self.trk_w * 2                                        # track distance
-        
-        self.d_via = int(caps.get('via_diameter') * self.SCALE)   # min via size
-        self.d_drill = int(caps.get('via_hole') * self.SCALE)   # min drill size
 
         # TODO: this to become a parameter (e.g. via grid size or something)
         self.via_rows = 2
@@ -215,6 +253,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # init buttons state
         if self.group:
             self.btn_clear.Enable(True)
+
+        return 0
 
     def init_path(self):
 
@@ -289,7 +329,9 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
     def generate(self):
 
         # get GUI parameters
-        self.get_parameters(self.fc_jlcpcb_12)
+        ret = self.get_parameters()
+        if ret<0:
+            return
 
         # generate and connect coils
         coils = self.do_windings(
@@ -305,7 +347,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
         # generate phase rings
         [cnx_seg, cnx_str, cri] = self.do_rings(
             self.r_coil_in,
-            max(self.dr, self.d_via),
+            self.d_via,
             self.n_slots,
             self.n_phases)
         
@@ -464,11 +506,14 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         th0 = 2*math.pi/n_slots
 
-        r_via = ri - dr
-        thv = math.atan2(1.5*dr, r_via)
+        r_clear = self.trk_w/2 + self.min_clear + self.d_via/2
+        t_clear = self.d_via + self.min_clear
 
-        r_via_o = ro - n_loops*dr
-        thv_o = math.atan2(1.5*dr, r_via_o)
+        r_via = ri - r_clear
+        thv = math.atan2(t_clear, r_via)
+
+        r_via_o = ro - (n_loops-1)*self.dr - r_clear
+        thv_o = math.atan2(t_clear, r_via_o)
 
         n_via = len(lset)/2
         vias = range(0,1) if n_via==1 else range(int(-n_via/2), math.ceil(n_via/2))
@@ -552,12 +597,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     a.SetStart( coil_se[1] )
                     a.SetEnd(
                         self.fpoint( 
-                            int((r_via_o+dr)*math.cos(th + thv_o*vias[iv])), 
-                            int((r_via_o+dr)*math.sin(th + thv_o*vias[iv]))))
+                            int((r_via_o+r_clear)*math.cos(th + thv_o*vias[iv])), 
+                            int((r_via_o+r_clear)*math.sin(th + thv_o*vias[iv]))))
                     a.SetMid(
                         self.fpoint( 
-                            int((r_via_o+dr)*math.cos(th + thv_o*vias[iv] /2 )), 
-                            int((r_via_o+dr)*math.sin(th + thv_o*vias[iv] /2 ))))
+                            int((r_via_o+r_clear)*math.cos(th + thv_o*vias[iv] /2 )), 
+                            int((r_via_o+r_clear)*math.sin(th + thv_o*vias[iv] /2 ))))
                     self.board.Add(a)
 
                     if viv > 0:
@@ -568,12 +613,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                         a.SetStart( coil_se[1] )
                         a.SetEnd(
                             self.fpoint( 
-                                int((r_via_o+dr)*math.cos(th + thv_o*viv)), 
-                                int((r_via_o+dr)*math.sin(th + thv_o*viv))))
+                                int((r_via_o+r_clear)*math.cos(th + thv_o*viv)), 
+                                int((r_via_o+r_clear)*math.sin(th + thv_o*viv))))
                         a.SetMid(
                             self.fpoint( 
-                                int((r_via_o+dr)*math.cos(th + thv_o*viv /2 )), 
-                                int((r_via_o+dr)*math.sin(th + thv_o*viv /2 ))))
+                                int((r_via_o+r_clear)*math.cos(th + thv_o*viv /2 )), 
+                                int((r_via_o+r_clear)*math.sin(th + thv_o*viv /2 ))))
                         self.board.Add(a)
 
                     t = pcbnew.PCB_TRACK(self.board)
@@ -618,12 +663,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                     a.SetStart( coil_se[0] )
                     a.SetEnd(
                         self.fpoint( 
-                            int((r_via+dr)*math.cos(th + thv*viv)), 
-                            int((r_via+dr)*math.sin(th + thv*viv))))
+                            int((r_via+r_clear)*math.cos(th + thv*viv)), 
+                            int((r_via+r_clear)*math.sin(th + thv*viv))))
                     a.SetMid(
                         self.fpoint( 
-                            int((r_via+dr)*math.cos(th + thv*viv /2 )), 
-                            int((r_via+dr)*math.sin(th + thv*viv /2 ))))
+                            int((r_via+r_clear)*math.cos(th + thv*viv /2 )), 
+                            int((r_via+r_clear)*math.sin(th + thv*viv /2 ))))
                     self.board.Add(a)
                     
                     if viv<0:
@@ -634,12 +679,12 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
                         a.SetStart( coil_se[0] )
                         a.SetEnd(
                             self.fpoint( 
-                                int((r_via+dr)*math.cos(th + thv*viv)), 
-                                int((r_via+dr)*math.sin(th + thv*viv))))
+                                int((r_via+r_clear)*math.cos(th + thv*viv)), 
+                                int((r_via+r_clear)*math.sin(th + thv*viv))))
                         a.SetMid(
                             self.fpoint( 
-                                int((r_via+dr)*math.cos(th + thv*viv /2 )), 
-                                int((r_via+dr)*math.sin(th + thv*viv /2 ))))
+                                int((r_via+r_clear)*math.cos(th + thv*viv /2 )), 
+                                int((r_via+r_clear)*math.sin(th + thv*viv /2 ))))
                         self.board.Add(a)
 
                     
@@ -673,7 +718,7 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
         Args:
             r_in (int): radial position of the coil inner end
-            dr (int): min track spacing
+            dr (int): clearance
             n_slot (int): number of motor slots
             n_phase (int): number of motor phases
         """
@@ -701,7 +746,8 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
             # radial location of the ring
             cri = r_in - p*dr
             
-            thv = math.atan2(dr,cri)
+            
+            thv = math.atan2(2*self.trk_w,cri)
 
             # segments on the same phase ring
             segs_t = []
@@ -1549,22 +1595,6 @@ class KiMotorDialog ( kimotor_gui.KiMotorGUI ):
 
 
     # combobox callbacks 
-    def on_cb_preset(self, event):
-        preset = self.m_cbPreset.GetSelection()
-        #val = self.m_cbPreset.GetStringSelection()
-        if preset == 0:
-            self.m_ctrlTrackWidth.SetValue(0.3)
-
-        # JLCPCB 1-2 layers 5mil(0.127mm)
-        elif preset == 1:
-            self.m_ctrlTrackWidth.SetValue(0.127)
-
-        # JLCPCB 4-6 layers
-        elif preset == 1:
-            self.m_ctrlTrackWidth.SetValue(0.127)
-
-        event.Skip()
-
     def on_cb_outline(self, event):
         if self.m_cbOutline.GetStringSelection() == "None":
             self.m_ctrlDout.Enable(False)

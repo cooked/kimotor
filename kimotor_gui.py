@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b)
+## Python code generated with wxFormBuilder (version 4.2.1-0-g80c4cb6)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -383,26 +383,6 @@ class KiMotorGUI ( wx.Frame ):
 
 		sbSizer1.Add( bSizer214, 1, wx.EXPAND, 5 )
 
-		bSizer2121 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.lbl_refresh_time121 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"PCB preset:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time121" )
-		self.lbl_refresh_time121.Wrap( -1 )
-
-		bSizer2121.Add( self.lbl_refresh_time121, 0, wx.ALL, 5 )
-
-
-		bSizer2121.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-
-		m_cbPresetChoices = [ u"Custom", u"JLCPCB, 1-2L", u"JLCPCB, 4-6L" ]
-		self.m_cbPreset = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, u"JLCPCB, 6L", wx.DefaultPosition, wx.Size( 150,20 ), m_cbPresetChoices, 0, wx.DefaultValidator, u"m_cbPreset" )
-		self.m_cbPreset.SetSelection( 2 )
-		self.m_cbPreset.Enable( False )
-
-		bSizer2121.Add( self.m_cbPreset, 0, wx.ALL, 5 )
-
-
-		sbSizer1.Add( bSizer2121, 1, wx.EXPAND, 5 )
-
 		bSizer212 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.lbl_refresh_time12 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"PCB layers:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time12" )
@@ -420,31 +400,23 @@ class KiMotorGUI ( wx.Frame ):
 
 		sbSizer1.Add( bSizer212, 1, wx.EXPAND, 5 )
 
-		bSizer211 = wx.BoxSizer( wx.HORIZONTAL )
+		bSizer2121 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.lbl_refresh_time11 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"Track width:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time11" )
-		self.lbl_refresh_time11.Wrap( -1 )
+		self.lbl_refresh_time121 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"PCB preset:", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time121" )
+		self.lbl_refresh_time121.Wrap( -1 )
 
-		self.lbl_refresh_time11.SetToolTip( u"Trace width in [mm]" )
-
-		bSizer211.Add( self.lbl_refresh_time11, 0, wx.ALL, 5 )
+		bSizer2121.Add( self.lbl_refresh_time121, 0, wx.ALL, 5 )
 
 
-		bSizer211.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+		bSizer2121.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
-		self.lbl_refresh_time112 = wx.StaticText( sbSizer1.GetStaticBox(), wx.ID_ANY, u"[mm]", wx.DefaultPosition, wx.DefaultSize, 0, u"lbl_refresh_time112" )
-		self.lbl_refresh_time112.Wrap( -1 )
-
-		self.lbl_refresh_time112.SetToolTip( u"Trace width in [mm]" )
-
-		bSizer211.Add( self.lbl_refresh_time112, 0, wx.ALL, 5 )
-
-		self.m_ctrlTrackWidth = SpinCtrlDoublePersist( sbSizer1.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 150,20 ), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_RIGHT|wx.SP_ARROW_KEYS, 0.127, 10, 0.134000, 0.001, u"m_ctrlTrackWidth" )
-		self.m_ctrlTrackWidth.SetDigits( 3 )
-		bSizer211.Add( self.m_ctrlTrackWidth, 0, wx.ALL, 5 )
+		m_cbPresetChoices = [ u"DRC Rules", u"Current T/V" ]
+		self.m_cbPreset = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, u"JLCPCB, 6L", wx.DefaultPosition, wx.Size( 150,20 ), m_cbPresetChoices, 0, wx.DefaultValidator, u"m_cbPreset" )
+		self.m_cbPreset.SetSelection( 0 )
+		bSizer2121.Add( self.m_cbPreset, 0, wx.ALL, 5 )
 
 
-		sbSizer1.Add( bSizer211, 1, wx.EXPAND, 5 )
+		sbSizer1.Add( bSizer2121, 1, wx.EXPAND, 5 )
 
 		bSizer22111 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -483,7 +455,7 @@ class KiMotorGUI ( wx.Frame ):
 		bSizer271.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
 		m_cbTPChoices = [ u"None", u"THT", u"SMD" ]
-		self.m_cbTP = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, u"THT", wx.DefaultPosition, wx.Size( 90,20 ), m_cbTPChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbTP" )
+		self.m_cbTP = wx.ComboBox( sbSizer1.GetStaticBox(), wx.ID_ANY, u"None", wx.DefaultPosition, wx.Size( 90,20 ), m_cbTPChoices, wx.CB_DROPDOWN|wx.CB_READONLY, wx.DefaultValidator, u"m_cbTP" )
 		self.m_cbTP.SetSelection( 0 )
 		bSizer271.Add( self.m_cbTP, 0, wx.ALL, 5 )
 
@@ -644,8 +616,8 @@ class KiMotorGUI ( wx.Frame ):
 		self.m_cbMountSize.Bind( wx.EVT_TEXT, self.on_cb_mholes )
 		self.m_cbScheme.Bind( wx.EVT_TEXT, self.on_cb_connections )
 		self.m_cbStrategy.Bind( wx.EVT_TEXT, self.on_cb_outline )
-		self.m_cbPreset.Bind( wx.EVT_TEXT, self.on_cb_preset )
 		self.m_ctrlLayers.Bind( wx.EVT_SPINCTRLDOUBLE, self.on_nr_layers )
+		self.m_cbPreset.Bind( wx.EVT_TEXT, self.on_cb_preset )
 		self.m_cbTP.Bind( wx.EVT_TEXT, self.on_cb_trmtype )
 		self.m_termSize.Bind( wx.EVT_TEXT, self.on_cb_connections )
 		self.btn_load.Bind( wx.EVT_BUTTON, self.on_btn_load )
@@ -671,10 +643,10 @@ class KiMotorGUI ( wx.Frame ):
 		event.Skip()
 
 
-	def on_cb_preset( self, event ):
+	def on_nr_layers( self, event ):
 		event.Skip()
 
-	def on_nr_layers( self, event ):
+	def on_cb_preset( self, event ):
 		event.Skip()
 
 	def on_cb_trmtype( self, event ):

@@ -1,4 +1,4 @@
-# Copyright 2022 Stefano Cottafavi <stefano.cottafavi@gmail.com>.
+# Copyright 2022-2024 Stefano Cottafavi <stefano.cottafavi@gmail.com>.
 # SPDX-License-Identifier: GPL-2.0-only
 
 import math
